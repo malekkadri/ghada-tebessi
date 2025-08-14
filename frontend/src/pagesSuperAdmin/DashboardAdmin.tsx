@@ -1,7 +1,24 @@
 import { useEffect, useState } from 'react';
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
-import { statsService } from '../services/api';
+import {
+  statsService,
+  projectService,
+  pixelService,
+  customDomainService,
+  subscriptionService,
+  vcardService,
+} from '../services/api';
+import ProjectCharts from '../atoms/Charts/ProjectCharts';
+import PixelCharts from '../atoms/Charts/PixelCharts';
+import CustomDomainCharts from '../atoms/Charts/CustomDomainCharts';
+import SubscriptionCharts from '../atoms/Charts/SubscriptionCharts';
+import VCardsCharts from '../atoms/Charts/VCardsCharts';
+import { Project } from '../services/Project';
+import { Pixel } from '../services/Pixel';
+import { CustomDomain } from '../services/CustomDomain';
+import { Subscription } from '../services/Subscription';
+import { VCardWithUser } from '../services/api';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -18,12 +35,47 @@ interface Stats {
 
 const DashboardAdmin = () => {
   const [stats, setStats] = useState<Stats | null>(null);
+  const [projects, setProjects] = useState<Project[]>([]);
+  const [pixels, setPixels] = useState<Pixel[]>([]);
+  const [domains, setDomains] = useState<CustomDomain[]>([]);
+  const [subscriptions, setSubscriptions] = useState<Subscription[]>([]);
+  const [vcards, setVcards] = useState<VCardWithUser[]>([]);
 
   useEffect(() => {
-    statsService
-      .getStats()
-      .then((data) => setStats(data))
-      .catch((err) => console.error('Failed to load stats', err));
+    const fetchData = async () => {
+      try {
+        const [statsData, projectRes, pixelRes, domainRes, subscriptionRes, vcardRes] =
+          await Promise.all([
+            statsService.getStats(),
+            projectService.getAllProjectsWithUser(),
+            pixelService.getPixels(),
+            customDomainService.getDomains(),
+            subscriptionService.getSubscriptions(),
+            vcardService.getAllWithUsers(),
+          ]);
+
+        setStats(statsData);
+        if (projectRes && Array.isArray(projectRes.data)) {
+          setProjects(projectRes.data);
+        }
+        if (pixelRes && Array.isArray(pixelRes.data)) {
+          setPixels(pixelRes.data);
+        }
+        if (domainRes && Array.isArray(domainRes.data)) {
+          setDomains(domainRes.data);
+        }
+        if (subscriptionRes && Array.isArray(subscriptionRes.data)) {
+          setSubscriptions(subscriptionRes.data);
+        }
+        if (vcardRes && Array.isArray(vcardRes.data)) {
+          setVcards(vcardRes.data);
+        }
+      } catch (err) {
+        console.error('Failed to load dashboard data', err);
+      }
+    };
+
+    fetchData();
   }, []);
 
   return (
@@ -124,6 +176,14 @@ const DashboardAdmin = () => {
           />
         </div>
       )}
+
+      <div className="space-y-8">
+        <ProjectCharts projects={projects} />
+        <PixelCharts pixels={pixels} />
+        <CustomDomainCharts domains={domains} />
+        <SubscriptionCharts subscriptions={subscriptions} />
+        <VCardsCharts vcards={vcards} />
+      </div>
     </div>
   );
 };
