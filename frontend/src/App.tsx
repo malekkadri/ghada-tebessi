@@ -45,6 +45,9 @@ import ListSubscriptions from './pagesSuperAdmin/Subscriptions/ListSubscriptions
 import ListApiKeys from './pagesSuperAdmin/ApiKeys/ListApiKeys';
 import ListQuotes from './pagesSuperAdmin/Quote/ListQuotes';
 import AuthHandler from './authentification/AuthHandler';
+import LeadsPage from './pages/LeadsPage';
+import CustomersPage from './pages/CustomersPage';
+import InteractionFormPage from './pages/InteractionForm';
 
 function App() {
   const { isLoading, user } = useAuth(); 
@@ -109,6 +112,11 @@ function App() {
               <Route path="create" element={<CustomDomainForm />} />
               <Route path="edit/:id" element={<CustomDomainForm />} />
             </Route>
+            <Route path="crm">
+              <Route path="leads" element={<LeadsPage />} />
+              <Route path="customers" element={<CustomersPage />} />
+              <Route path="interactions/:id" element={<InteractionFormPage />} />
+            </Route>
           </Route>
 
           <Route path="/super-admin" element={<Layout role="superAdmin" />}>
@@ -142,6 +150,11 @@ function App() {
             </Route>
             <Route path="custom-domains">
               <Route index element={<ListCustomDomains />} />
+            </Route>
+            <Route path="crm">
+              <Route path="leads" element={<LeadsPage />} />
+              <Route path="customers" element={<CustomersPage />} />
+              <Route path="interactions/:id" element={<InteractionFormPage />} />
             </Route>
             <Route path="subscriptions">
               <Route index element={<ListSubscriptions />} />
