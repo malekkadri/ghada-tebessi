@@ -12,7 +12,9 @@ import { VCard } from './vcard';
 
 const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
-  timeout: 10000,
+  // Allow the API timeout to be configured via environment variable and
+  // fall back to a generous default to avoid premature request aborts.
+  timeout: Number(import.meta.env.VITE_API_TIMEOUT) || 30000,
   headers: {
     'Content-Type': 'application/json',
   },
@@ -76,11 +78,17 @@ api.interceptors.request.use(config => {
 api.interceptors.response.use(
   response => response,
   async error => {
-    const config = error.config;
-    if (error.code === 'ERR_NETWORK' && !config._retry) {
-      config._retry = true;
+    const config = error.config || {};
 
-      await new Promise(res => setTimeout(res, 2 ** config._retryCount * 1000 || 1000));
+    // Retry the request once when we encounter network issues or a timeout
+    // from Axios (ECONNABORTED). This helps mitigate temporary connectivity
+    // problems without instantly failing the user-facing action.
+    if ((error.code === 'ERR_NETWORK' || error.code === 'ECONNABORTED') && !config._retry) {
+      config._retry = true;
+      config._retryCount = (config._retryCount || 0) + 1;
+
+      const delay = 2 ** config._retryCount * 1000;
+      await new Promise(res => setTimeout(res, delay));
       return api(config);
     }
     return Promise.reject(error);
