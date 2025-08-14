@@ -1,6 +1,25 @@
 import React from 'react';
+import { Pie } from 'react-chartjs-2';
+import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
 
-const MainPanel: React.FC = () => {
+ChartJS.register(ArcElement, Tooltip, Legend);
+
+export interface Stats {
+  totalUsers: number;
+  totalProjects: number;
+  totalVCards: number;
+  usersByRole: {
+    admin: number;
+    superAdmin: number;
+    user: number;
+  };
+}
+
+interface Props {
+  stats?: Stats | null;
+}
+
+const MainPanel: React.FC<Props> = ({ stats }) => {
   return (
     <div className="page-container w-full">
       <h2 className="my-6 text-2xl font-semibold text-gray-700 dark:text-gray-200">
@@ -15,10 +34,10 @@ const MainPanel: React.FC = () => {
           </div>
           <div>
             <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-              Total clients
+              Total users
             </p>
             <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">
-              6389
+              {stats?.totalUsers ?? 0}
             </p>
           </div>
         </div>
@@ -34,10 +53,10 @@ const MainPanel: React.FC = () => {
           </div>
           <div>
             <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-              Account balance
+              Total projects
             </p>
             <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">
-              $ 46,760.89
+              {stats?.totalProjects ?? 0}
             </p>
           </div>
         </div>
@@ -49,10 +68,10 @@ const MainPanel: React.FC = () => {
           </div>
           <div>
             <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-              New sales
+              Total vCards
             </p>
             <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">
-              376
+              {stats?.totalVCards ?? 0}
             </p>
           </div>
         </div>
@@ -68,14 +87,37 @@ const MainPanel: React.FC = () => {
           </div>
           <div>
             <p className="mb-2 text-sm font-medium text-gray-600 dark:text-gray-400">
-              Pending contacts
+              Super admins
             </p>
             <p className="text-lg font-semibold text-gray-700 dark:text-gray-200">
-              35
+              {stats?.usersByRole.superAdmin ?? 0}
             </p>
           </div>
         </div>
       </div>
+
+      {stats && (
+        <div className="p-4 mb-8 bg-white rounded-lg shadow-xs dark:bg-gray-800">
+          <h3 className="mb-4 text-lg font-semibold text-gray-700 dark:text-gray-200">
+            Users by role
+          </h3>
+          <Pie
+            data={{
+              labels: ['Admin', 'Super Admin', 'User'],
+              datasets: [
+                {
+                  data: [
+                    stats.usersByRole.admin,
+                    stats.usersByRole.superAdmin,
+                    stats.usersByRole.user,
+                  ],
+                  backgroundColor: ['#f97316', '#6366f1', '#10b981'],
+                },
+              ],
+            }}
+          />
+        </div>
+      )}
 
       <div className="w-full overflow-hidden rounded-lg shadow-xs">
         <div className="w-full overflow-x-auto">
