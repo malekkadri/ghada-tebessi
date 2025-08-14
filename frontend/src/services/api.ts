@@ -1099,3 +1099,15 @@ export const visitorService = {
     }
   },
 };
+
+export const statsService = {
+  getStats: async () => {
+    try {
+      const response = await api.get('/superadmin/stats');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching super admin stats:', error);
+      throw error;
+    }
+  },
+};

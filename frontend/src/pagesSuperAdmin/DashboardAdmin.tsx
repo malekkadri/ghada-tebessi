@@ -1,7 +1,7 @@
 import { useEffect, useState } from 'react';
-import axios from 'axios';
 import { Pie } from 'react-chartjs-2';
 import { Chart as ChartJS, ArcElement, Tooltip, Legend } from 'chart.js';
+import { statsService } from '../services/api';
 
 ChartJS.register(ArcElement, Tooltip, Legend);
 
@@ -20,9 +20,9 @@ const DashboardAdmin = () => {
   const [stats, setStats] = useState<Stats | null>(null);
 
   useEffect(() => {
-    axios
-      .get('http://localhost:3000/superadmin/stats', { withCredentials: true })
-      .then((res) => setStats(res.data))
+    statsService
+      .getStats()
+      .then((data) => setStats(data))
       .catch((err) => console.error('Failed to load stats', err));
   }, []);
 
