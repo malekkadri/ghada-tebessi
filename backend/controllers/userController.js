@@ -170,13 +170,15 @@ const signIn = async (req, res) => {
       sameSite: 'strict'
     });
 
-    await activityLogController.logActivity(user.id, 'login_success', req);
+    activityLogController
+      .logActivity(user.id, 'login_success', req)
+      .catch(err => console.error('Activity logging failed:', err));
     res.status(200).json({
       success: true,
       message: "Login successful",
       token,
-      user: { 
-        id: user.id, 
+      user: {
+        id: user.id,
         name: user.name, 
         email: user.email, 
         role: user.role 
@@ -330,7 +332,9 @@ const handleGoogleAuth = async (req, res, profile) => {
         sameSite: 'strict'
       });
     }
-    await activityLogController.logActivity(user.id, 'login_success_with_google', req);
+    activityLogController
+      .logActivity(user.id, 'login_success_with_google', req)
+      .catch(err => console.error('Activity logging failed:', err));
     return {
       success: true,
       token,
