@@ -1,0 +1,42 @@
+/* Custom CSS for Team Component - Override template styles */
+
+/* Force team social links to be always visible */
+.team-item .btn {
+    opacity: 1 !important;
+    margin-top: 0 !important;
+    transition: all 0.3s ease-in-out !important;
+    transform: translateY(0) !important;
+}
+
+/* Ensure social links container is always visible */
+.team-item .d-flex.justify-content-center {
+    opacity: 1 !important;
+    visibility: visible !important;
+    position: relative !important;
+    margin-top: 0 !important;
+}
+
+/* Enhanced hover effects for social buttons */
+.team-item .btn:hover {
+    transform: translateY(-3px) !important;
+    box-shadow: 0 5px 15px rgba(var(--bs-primary-rgb), 0.3) !important;
+    border-color: var(--bs-primary) !important;
+    background-color: var(--bs-primary) !important;
+    color: white !important;
+}
+
+/* Override any .team-social styles from template */
+.team-social,
+.team-item .team-social {
+    opacity: 1 !important;
+    margin-top: 0 !important;
+    position: relative !important;
+    visibility: visible !important;
+    display: flex !important;
+}
+
+/* Make sure team-item hover doesn't interfere */
+.team-item:hover .btn {
+    opacity: 1 !important;
+    margin-top: 0 !important;
+}
