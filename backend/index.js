@@ -18,6 +18,7 @@ const LimitsRoutes = require('./routes/LimiteRoutes');
 const projectRoutes = require('./routes/projectRoutes');
 const pixelRoutes = require('./routes/pixelRoutes');
 const customDomainRoutes = require('./routes/customDomainRoutes');
+const statsRoutes = require('./routes/statsRoutes');
 const sequelize = require('./database/sequelize');
 const { requireAuth } = require('./middleware/authMiddleware');
 const path = require("path");
@@ -165,6 +166,7 @@ app.use('/limits', LimitsRoutes);
 app.use('/project', projectRoutes);
 app.use('/pixel', pixelRoutes);
 app.use('/custom-domain', customDomainRoutes);
+app.use('/', statsRoutes);
 
 app.get('/', (_req, res) => {
   res.send('Welcome to the User Management API!');

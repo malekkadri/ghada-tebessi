@@ -10,7 +10,7 @@ import { CustomDomain, DNSInstructions } from './CustomDomain';
 import { Quote, QuoteService as QuoteServiceEnum } from './Quote';
 import { VCard } from './vcard';
 
-const api = axios.create({
+export const api = axios.create({
   baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000',
   // Allow the API timeout to be configured via environment variable and
   // fall back to a generous default to avoid premature request aborts.
