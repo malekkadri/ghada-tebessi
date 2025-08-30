@@ -8,6 +8,8 @@ router.get('/customers', crmController.getCustomers);
 router.get('/customers/:id', crmController.getCustomerById);
 router.put('/customers/:id', crmController.updateCustomer);
 router.delete('/customers/:id', crmController.deleteCustomer);
+router.get('/customers/:id/interactions', crmController.getInteractionsByCustomer);
+router.post('/customers/:id/interactions', crmController.createInteractionForCustomer);
 
 // Lead routes
 router.post('/leads', crmController.createLead);
