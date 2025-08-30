@@ -30,7 +30,7 @@ export interface Customer {
 export interface Interaction {
   id: string;
   customerId: string;
-  note: string;
+  notes: string;
   createdAt?: string;
 }
 
@@ -40,7 +40,7 @@ export const crmService = {
   getInteractions: (customerId: string) =>
     api.get<Interaction[]>(`/customers/${customerId}/interactions`).then(res => res.data),
   createInteraction: (customerId: string, data: { note: string }) =>
-    api.post(`/customers/${customerId}/interactions`, data).then(res => res.data),
+    api.post(`/customers/${customerId}/interactions`, { notes: data.note }).then(res => res.data),
 };
 
 export default crmService;
