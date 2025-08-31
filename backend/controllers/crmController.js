@@ -196,7 +196,7 @@ const deleteLead = async (req, res) => {
   }
 };
 
-// Convert a lead to a customer
+// Convert a lead to a customer (preserve tags)
 const convertLeadToCustomer = async (req, res) => {
   try {
     const lead = await Lead.findOne({
@@ -510,5 +510,5 @@ module.exports = {
   getInteractions,
   getInteractionById,
   updateInteraction,
-  deleteInteraction
+  deleteInteraction,
 };

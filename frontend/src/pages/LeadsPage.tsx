@@ -101,6 +101,16 @@ const LeadsPage: React.FC = () => {
     }
   };
 
+  const handleConvert = async (id: string) => {
+    try {
+      await crmService.convertLead(id);
+      setLeads(leads.filter(l => l.id !== id));
+      navigate(`${basePath}/crm/customers`);
+    } catch (error) {
+      console.error('Failed to convert lead', error);
+    }
+  };
+
   const handleEdit = (lead: Lead) => {
     setEditingLead(lead);
     setEditForm({
@@ -347,6 +357,12 @@ const LeadsPage: React.FC = () => {
                     onClick={() => handleEdit(lead)}
                   >
                     Edit
+                  </button>
+                  <button
+                    className="text-purple-600"
+                    onClick={() => handleConvert(lead.id)}
+                  >
+                    Convert
                   </button>
                   <button
                     className="text-red-600"
