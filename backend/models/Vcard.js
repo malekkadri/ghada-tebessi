@@ -138,6 +138,18 @@ VCard.associate = function(models) {
     as: 'customDomain',
     onDelete: 'SET NULL'
   });
+
+  VCard.hasMany(models.Customer, {
+    foreignKey: 'vcardId',
+    as: 'Customers',
+    onDelete: 'SET NULL'
+  });
+
+  VCard.hasMany(models.Lead, {
+    foreignKey: 'vcardId',
+    as: 'Leads',
+    onDelete: 'SET NULL'
+  });
 };
 
 module.exports = VCard;
