@@ -17,6 +17,8 @@ router.get('/leads', crmController.getLeads);
 router.get('/leads/:id', crmController.getLeadById);
 router.put('/leads/:id', crmController.updateLead);
 router.delete('/leads/:id', crmController.deleteLead);
+router.get('/leads/:id/interactions', crmController.getInteractionsByLead);
+router.post('/leads/:id/interactions', crmController.createInteractionForLead);
 
 // Interaction routes
 router.post('/interactions', crmController.createInteraction);
