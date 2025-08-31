@@ -54,6 +54,9 @@ export const crmService = {
     api.get<Interaction[]>(`/customers/${customerId}/interactions`).then(res => res.data),
   createInteraction: (customerId: string, data: { note: string }) =>
     api.post(`/customers/${customerId}/interactions`, { notes: data.note }).then(res => res.data),
+  updateInteraction: (id: string, data: { note: string }) =>
+    api.put(`/interactions/${id}`, { notes: data.note }).then(res => res.data),
+  deleteInteraction: (id: string) => api.delete(`/interactions/${id}`),
 };
 
 export default crmService;

@@ -112,6 +112,10 @@ const Sidebar: React.FC<SidebarProps> = ({
         label: 'Custom Domains'
       },
       {
+        type: 'section',
+        label: 'CRM'
+      },
+      {
         path: `${basePath}/crm/leads`,
         icon: (
           <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -185,18 +189,25 @@ const Sidebar: React.FC<SidebarProps> = ({
     return commonItems;
   }, [role, basePath]);
 
-  const renderMenuItem = (item: typeof menuItems[0]) => {
+  const renderMenuItem = (item: any) => {
+    if (item.type === 'section') {
+      return (
+        <li key={item.label} className="px-6 py-2 text-xs font-semibold text-gray-500 dark:text-gray-400 uppercase">
+          {item.label}
+        </li>
+      );
+    }
     const active = isActive(item.path, item.exact);
-    
+
     return (
       <li key={item.path} className="relative px-6 py-3">
         {active && (
-          <span 
+          <span
             className="absolute inset-y-0 left-0 w-1 rounded-tr-lg rounded-br-lg bg-blue-50"
             aria-hidden="true"
           />
         )}
-        
+
         <Link
           to={item.path}
           onClick={handleMobileLinkClick}
