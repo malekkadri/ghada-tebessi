@@ -34,7 +34,7 @@ const CustomersPage: React.FC = () => {
   useEffect(() => {
     if (!user) return;
     vcardService
-      .getAll(user.id)
+      .getAll(String(user.id))
       .then(setVcards)
       .catch(err => console.error('Failed to load vcards', err));
   }, [user]);

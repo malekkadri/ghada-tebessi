@@ -26,7 +26,6 @@ export interface Lead {
   phone?: string;
   status?: string;
   notes?: string;
-  vcardId?: string;
   Tags?: Tag[];
 }
 
