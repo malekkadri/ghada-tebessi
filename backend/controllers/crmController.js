@@ -2,6 +2,7 @@ const Customer = require('../models/Customer');
 const Lead = require('../models/Lead');
 const Interaction = require('../models/Interaction');
 const Tag = require('../models/Tag');
+const VCard = require('../models/Vcard');
 const { Op } = require('sequelize');
 
 // Customer CRUD
@@ -31,7 +32,10 @@ const getCustomers = async (req, res) => {
     }
 
     const tagIds = tags ? tags.split(',') : null;
-    const include = [{ model: Tag, as: 'Tags', through: { attributes: [] } }];
+    const include = [
+      { model: Tag, as: 'Tags', through: { attributes: [] } },
+      { model: VCard, as: 'Vcard', attributes: ['id', 'name'] }
+    ];
     if (tagIds) {
       include[0].where = { id: tagIds };
       include[0].required = true;
@@ -57,7 +61,10 @@ const getCustomerById = async (req, res) => {
   try {
     const customer = await Customer.findOne({
       where: { id: req.params.id, userId: req.user.id },
-      include: [{ model: Tag, as: 'Tags', through: { attributes: [] } }],
+      include: [
+        { model: Tag, as: 'Tags', through: { attributes: [] } },
+        { model: VCard, as: 'Vcard', attributes: ['id', 'name'] }
+      ],
     });
     if (!customer) {
       return res.status(404).json({ error: 'Customer not found' });
@@ -77,7 +84,10 @@ const updateCustomer = async (req, res) => {
       return res.status(404).json({ error: 'Customer not found' });
     }
     const updatedCustomer = await Customer.findByPk(req.params.id, {
-      include: [{ model: Tag, as: 'Tags', through: { attributes: [] } }],
+      include: [
+        { model: Tag, as: 'Tags', through: { attributes: [] } },
+        { model: VCard, as: 'Vcard', attributes: ['id', 'name'] }
+      ],
     });
     res.json(updatedCustomer);
   } catch (error) {
@@ -337,6 +347,9 @@ const linkVcardToCustomer = async (req, res) => {
     }
     customer.vcardId = req.body.vcardId;
     await customer.save();
+    await customer.reload({
+      include: [{ model: VCard, as: 'Vcard', attributes: ['id', 'name'] }],
+    });
     res.json(customer);
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });

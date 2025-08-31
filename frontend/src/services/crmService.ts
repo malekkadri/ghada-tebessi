@@ -1,5 +1,6 @@
 import axios from 'axios';
 import { getToken } from './tokenService';
+import type { VCard } from './vcard';
 
 const api = axios.create({
   baseURL: `${import.meta.env.VITE_API_BASE_URL || 'http://localhost:3000'}/crm`,
@@ -37,6 +38,7 @@ export interface Customer {
   status?: string;
   notes?: string;
   vcardId?: string;
+  Vcard?: Pick<VCard, 'id' | 'name'>;
   Tags?: Tag[];
 }
 

@@ -207,7 +207,10 @@ export const vcardService = {
   getAll: async (userId: string) => {
     try {
       const response = await api.get(`/vcard?userId=${userId}`);
-      return response.data;
+      // Some endpoints return the vCards array directly while others
+      // wrap it in a `data` property. Normalize the response so callers
+      // always receive an array of vCards.
+      return Array.isArray(response.data) ? response.data : response.data?.data || [];
     } catch (error) {
       console.error('Error getting all vcards:', error);
       throw error;

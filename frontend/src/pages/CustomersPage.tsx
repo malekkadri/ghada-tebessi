@@ -117,7 +117,7 @@ const CustomersPage: React.FC = () => {
       phone: customer.phone || '',
       status: customer.status || '',
       notes: customer.notes || '',
-      vcardId: customer.vcardId || '',
+      vcardId: customer.vcardId ? String(customer.vcardId) : '',
     });
     setEditFormTags(customer.Tags?.map(t => t.id.toString()) || []);
   };
@@ -363,7 +363,7 @@ const CustomersPage: React.FC = () => {
                     {customer.Tags?.map(t => t.name).join(', ')}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
-                    {vcards.find(v => v.id === customer.vcardId)?.name || ''}
+                    {customer.Vcard?.name || ''}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm space-x-2">
                   <button
