@@ -7,6 +7,7 @@ import { useNavigate, useLocation } from 'react-router-dom';
 const LeadsPage: React.FC = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [stageFilter, setStageFilter] = useState<string>();
+  const [form, setForm] = useState({ name: '', email: '' });
   const navigate = useNavigate();
   const location = useLocation();
   const basePath = location.pathname.startsWith('/super-admin') ? '/super-admin' : '/admin';
@@ -21,12 +22,66 @@ const LeadsPage: React.FC = () => {
   const stages = ['New', 'Contacted', 'Qualified', 'Lost', 'Won'];
 
   const filteredLeads = stageFilter
-    ? leads.filter(l => l.stage === stageFilter)
+    ? leads.filter(l => l.status === stageFilter)
     : leads;
+
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    try {
+      const newLead = await crmService.createLead({ ...form, status: 'New' });
+      setLeads([...leads, newLead]);
+      setForm({ name: '', email: '' });
+    } catch (error) {
+      console.error('Failed to create lead', error);
+    }
+  };
+
+  const handleDelete = async (id: string) => {
+    try {
+      await crmService.deleteLead(id);
+      setLeads(leads.filter(l => l.id !== id));
+    } catch (error) {
+      console.error('Failed to delete lead', error);
+    }
+  };
+
+  const handleEdit = async (lead: Lead) => {
+    const name = prompt('Name', lead.name);
+    if (!name) return;
+    try {
+      const updated = await crmService.updateLead(lead.id, { name });
+      setLeads(leads.map(l => (l.id === lead.id ? updated : l)));
+    } catch (error) {
+      console.error('Failed to update lead', error);
+    }
+  };
 
   return (
     <div className="space-y-4 py-6">
       <h1 className="text-2xl font-semibold">Leads</h1>
+      <form onSubmit={handleSubmit} className="space-y-2 max-w-sm">
+        <input
+          name="name"
+          value={form.name}
+          onChange={handleChange}
+          placeholder="Name"
+          className="w-full p-2 border rounded"
+        />
+        <input
+          name="email"
+          value={form.email}
+          onChange={handleChange}
+          placeholder="Email"
+          className="w-full p-2 border rounded"
+        />
+        <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">
+          Add Lead
+        </button>
+      </form>
       <PipelineStage stages={stages} current={stageFilter} onStageClick={setStageFilter} />
       <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
         {filteredLeads.map(lead => (
@@ -34,6 +89,8 @@ const LeadsPage: React.FC = () => {
             key={lead.id}
             customer={lead}
             onClick={() => navigate(`${basePath}/crm/interactions/${lead.id}`)}
+            onEdit={() => handleEdit(lead)}
+            onDelete={() => handleDelete(lead.id)}
           />
         ))}
       </div>
