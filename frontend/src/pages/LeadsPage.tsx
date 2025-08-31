@@ -9,16 +9,19 @@ const LeadsPage: React.FC = () => {
   const [form, setForm] = useState({ name: '', email: '', phone: '', status: 'New', notes: '' });
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [editForm, setEditForm] = useState({ name: '', email: '', phone: '', status: '', notes: '' });
+  const [search, setSearch] = useState('');
+  const [sortBy, setSortBy] = useState('name');
+  const [order, setOrder] = useState<'asc' | 'desc'>('asc');
   const navigate = useNavigate();
   const location = useLocation();
   const basePath = location.pathname.startsWith('/super-admin') ? '/super-admin' : '/admin';
 
   useEffect(() => {
     crmService
-      .getLeads()
+      .getLeads({ search, sortBy, order })
       .then(data => setLeads(data))
       .catch(err => console.error('Failed to load leads', err));
-  }, []);
+  }, [search, sortBy, order]);
 
   const stages = ['New', 'Contacted', 'Qualified', 'Lost', 'Won'];
 
@@ -32,6 +35,10 @@ const LeadsPage: React.FC = () => {
 
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setEditForm({ ...editForm, [e.target.name]: e.target.value });
+  };
+
+  const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setSearch(e.target.value);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -80,6 +87,31 @@ const LeadsPage: React.FC = () => {
   return (
     <div className="space-y-4 py-6">
       <h1 className="text-2xl font-semibold">Leads</h1>
+      <div className="flex flex-col sm:flex-row gap-2 sm:items-center">
+        <input
+          value={search}
+          onChange={handleSearchChange}
+          placeholder="Search leads"
+          className="p-2 border rounded w-full sm:w-64"
+        />
+        <select
+          value={sortBy}
+          onChange={e => setSortBy(e.target.value)}
+          className="p-2 border rounded"
+        >
+          <option value="name">Name</option>
+          <option value="email">Email</option>
+          <option value="created_at">Created</option>
+        </select>
+        <select
+          value={order}
+          onChange={e => setOrder(e.target.value as 'asc' | 'desc')}
+          className="p-2 border rounded"
+        >
+          <option value="asc">Asc</option>
+          <option value="desc">Desc</option>
+        </select>
+      </div>
       <form onSubmit={handleSubmit} className="space-y-2 max-w-sm">
         <input
           name="name"
