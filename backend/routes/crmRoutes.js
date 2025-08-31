@@ -17,6 +17,7 @@ router.post('/leads', requireAuth, crmController.createLead);
 router.get('/leads', requireAuth, crmController.getLeads);
 router.get('/leads/:id', requireAuth, crmController.getLeadById);
 router.put('/leads/:id', requireAuth, crmController.updateLead);
+router.post('/leads/:id/convert', requireAuth, crmController.convertLeadToCustomer);
 router.delete('/leads/:id', requireAuth, crmController.deleteLead);
 router.get('/leads/:id/interactions', requireAuth, crmController.getInteractionsByLead);
 router.post('/leads/:id/interactions', requireAuth, crmController.createInteractionForLead);
