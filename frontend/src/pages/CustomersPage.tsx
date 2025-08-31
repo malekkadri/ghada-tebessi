@@ -1,25 +1,37 @@
 import React, { useEffect, useState } from 'react';
-import { crmService, Customer } from '../services/crmService';
+import { crmService, Customer, Tag } from '../services/crmService';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const CustomersPage: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
   const [form, setForm] = useState({ name: '', email: '', phone: '', status: '', notes: '' });
+  const [formTags, setFormTags] = useState<string[]>([]);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
   const [editForm, setEditForm] = useState({ name: '', email: '', phone: '', status: '', notes: '' });
+  const [editFormTags, setEditFormTags] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [newTag, setNewTag] = useState('');
+  const [filterTags, setFilterTags] = useState<string[]>([]);
   const navigate = useNavigate();
   const location = useLocation();
   const basePath = location.pathname.startsWith('/super-admin') ? '/super-admin' : '/admin';
 
   useEffect(() => {
     crmService
-      .getCustomers({ search, sortBy, order })
+      .getTags()
+      .then(setTags)
+      .catch(err => console.error('Failed to load tags', err));
+  }, []);
+
+  useEffect(() => {
+    crmService
+      .getCustomers({ search, sortBy, order, tags: filterTags })
       .then(data => setCustomers(data))
       .catch(err => console.error('Failed to load customers', err));
-  }, [search, sortBy, order]);
+  }, [search, sortBy, order, filterTags]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
@@ -33,12 +45,40 @@ const CustomersPage: React.FC = () => {
     setSearch(e.target.value);
   };
 
+  const handleFormTagsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormTags(Array.from(e.target.selectedOptions, option => option.value));
+  };
+
+  const handleEditTagsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setEditFormTags(Array.from(e.target.selectedOptions, option => option.value));
+  };
+
+  const handleFilterTagsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFilterTags(Array.from(e.target.selectedOptions, option => option.value));
+  };
+
+  const handleCreateTag = async () => {
+    if (!newTag.trim()) return;
+    try {
+      const created = await crmService.createTag({ name: newTag.trim() });
+      setTags([...tags, created]);
+      setNewTag('');
+    } catch (error) {
+      console.error('Failed to create tag', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const newCustomer = await crmService.createCustomer(form);
-      setCustomers([...customers, newCustomer]);
+      for (const tagId of formTags) {
+        await crmService.assignTagToCustomer(newCustomer.id, tagId);
+      }
+      const refreshed = await crmService.getCustomers({ search, sortBy, order, tags: filterTags });
+      setCustomers(refreshed);
       setForm({ name: '', email: '', phone: '', status: '', notes: '' });
+      setFormTags([]);
     } catch (error) {
       console.error('Failed to create customer', error);
     }
@@ -62,14 +102,25 @@ const CustomersPage: React.FC = () => {
       status: customer.status || '',
       notes: customer.notes || '',
     });
+    setEditFormTags(customer.Tags?.map(t => t.id.toString()) || []);
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingCustomer) return;
     try {
-      const updated = await crmService.updateCustomer(editingCustomer.id, editForm);
-      setCustomers(customers.map(c => (c.id === editingCustomer.id ? updated : c)));
+      await crmService.updateCustomer(editingCustomer.id, editForm);
+      const prev = editingCustomer.Tags?.map(t => t.id.toString()) || [];
+      const toAdd = editFormTags.filter(id => !prev.includes(id));
+      const toRemove = prev.filter(id => !editFormTags.includes(id));
+      for (const id of toAdd) {
+        await crmService.assignTagToCustomer(editingCustomer.id, id);
+      }
+      for (const id of toRemove) {
+        await crmService.unassignTagFromCustomer(editingCustomer.id, id);
+      }
+      const refreshed = await crmService.getCustomers({ search, sortBy, order, tags: filterTags });
+      setCustomers(refreshed);
       setEditingCustomer(null);
     } catch (error) {
       console.error('Failed to update customer', error);
@@ -103,6 +154,33 @@ const CustomersPage: React.FC = () => {
           <option value="asc">Asc</option>
           <option value="desc">Desc</option>
         </select>
+        <select
+          multiple
+          value={filterTags}
+          onChange={handleFilterTagsChange}
+          className="p-2 border rounded"
+        >
+          {tags.map(tag => (
+            <option key={tag.id} value={tag.id}>
+              {tag.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="flex gap-2">
+        <input
+          value={newTag}
+          onChange={e => setNewTag(e.target.value)}
+          placeholder="New tag"
+          className="p-2 border rounded"
+        />
+        <button
+          type="button"
+          onClick={handleCreateTag}
+          className="px-4 py-2 bg-blue-600 text-white rounded"
+        >
+          Add Tag
+        </button>
       </div>
       <form onSubmit={handleSubmit} className="space-y-2 max-w-sm">
         <input
@@ -133,6 +211,18 @@ const CustomersPage: React.FC = () => {
           placeholder="Status"
           className="w-full p-2 border rounded"
         />
+        <select
+          multiple
+          value={formTags}
+          onChange={handleFormTagsChange}
+          className="w-full p-2 border rounded"
+        >
+          {tags.map(tag => (
+            <option key={tag.id} value={tag.id}>
+              {tag.name}
+            </option>
+          ))}
+        </select>
         <textarea
           name="notes"
           value={form.notes}
@@ -176,6 +266,18 @@ const CustomersPage: React.FC = () => {
             placeholder="Status"
             className="w-full p-2 border rounded"
           />
+          <select
+            multiple
+            value={editFormTags}
+            onChange={handleEditTagsChange}
+            className="w-full p-2 border rounded"
+          >
+            {tags.map(tag => (
+              <option key={tag.id} value={tag.id}>
+                {tag.name}
+              </option>
+            ))}
+          </select>
           <textarea
             name="notes"
             value={editForm.notes}
@@ -199,6 +301,7 @@ const CustomersPage: React.FC = () => {
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Phone</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tags</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -209,6 +312,9 @@ const CustomersPage: React.FC = () => {
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{customer.email}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{customer.phone}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{customer.status}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    {customer.Tags?.map(t => t.name).join(', ')}
+                  </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm space-x-2">
                     <button
                       className="text-blue-600"

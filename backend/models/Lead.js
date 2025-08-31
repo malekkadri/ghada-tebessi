@@ -52,6 +52,11 @@ Lead.associate = (models) => {
     as: 'Interactions',
     onDelete: 'CASCADE'
   });
+  Lead.belongsToMany(models.Tag, {
+    through: models.LeadTag,
+    foreignKey: 'leadId',
+    as: 'Tags'
+  });
 };
 
 module.exports = Lead;

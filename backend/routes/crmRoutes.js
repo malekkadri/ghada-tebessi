@@ -11,6 +11,8 @@ router.put('/customers/:id', requireAuth, crmController.updateCustomer);
 router.delete('/customers/:id', requireAuth, crmController.deleteCustomer);
 router.get('/customers/:id/interactions', requireAuth, crmController.getInteractionsByCustomer);
 router.post('/customers/:id/interactions', requireAuth, crmController.createInteractionForCustomer);
+router.post('/customers/:id/tags/:tagId', requireAuth, crmController.assignTagToCustomer);
+router.delete('/customers/:id/tags/:tagId', requireAuth, crmController.unassignTagFromCustomer);
 
 // Lead routes
 router.post('/leads', requireAuth, crmController.createLead);
@@ -20,6 +22,14 @@ router.put('/leads/:id', requireAuth, crmController.updateLead);
 router.delete('/leads/:id', requireAuth, crmController.deleteLead);
 router.get('/leads/:id/interactions', requireAuth, crmController.getInteractionsByLead);
 router.post('/leads/:id/interactions', requireAuth, crmController.createInteractionForLead);
+router.post('/leads/:id/tags/:tagId', requireAuth, crmController.assignTagToLead);
+router.delete('/leads/:id/tags/:tagId', requireAuth, crmController.unassignTagFromLead);
+
+// Tag routes
+router.post('/tags', requireAuth, crmController.createTag);
+router.get('/tags', requireAuth, crmController.getTags);
+router.put('/tags/:id', requireAuth, crmController.updateTag);
+router.delete('/tags/:id', requireAuth, crmController.deleteTag);
 
 // Interaction routes
 router.post('/interactions', requireAuth, crmController.createInteraction);

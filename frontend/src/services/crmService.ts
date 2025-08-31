@@ -14,6 +14,11 @@ api.interceptors.request.use(config => {
   return config;
 });
 
+export interface Tag {
+  id: string;
+  name: string;
+}
+
 export interface Lead {
   id: string;
   name: string;
@@ -21,6 +26,7 @@ export interface Lead {
   phone?: string;
   status?: string;
   notes?: string;
+  Tags?: Tag[];
 }
 
 export interface Customer {
@@ -30,6 +36,7 @@ export interface Customer {
   phone?: string;
   status?: string;
   notes?: string;
+  Tags?: Tag[];
 }
 
 export interface Interaction {
@@ -43,8 +50,17 @@ export interface Interaction {
 }
 
 export const crmService = {
-  getLeads: (params?: { search?: string; sortBy?: string; order?: 'asc' | 'desc' }) =>
-    api.get<Lead[]>('/leads', { params }).then(res => res.data),
+  getLeads: (params?: {
+    search?: string;
+    sortBy?: string;
+    order?: 'asc' | 'desc';
+    tags?: string[];
+  }) =>
+    api
+      .get<Lead[]>('/leads', {
+        params: { ...params, tags: params?.tags?.join(',') },
+      })
+      .then(res => res.data),
   createLead: (data: Partial<Lead>) => api.post('/leads', data).then(res => res.data),
   updateLead: (id: string, data: Partial<Lead>) => api.put(`/leads/${id}`, data).then(res => res.data),
   deleteLead: (id: string) => api.delete(`/leads/${id}`),
@@ -53,11 +69,31 @@ export const crmService = {
     search?: string;
     sortBy?: string;
     order?: 'asc' | 'desc';
-  }) => api.get<Customer[]>('/customers', { params }).then(res => res.data),
+    tags?: string[];
+  }) =>
+    api
+      .get<Customer[]>('/customers', {
+        params: { ...params, tags: params?.tags?.join(',') },
+      })
+      .then(res => res.data),
   createCustomer: (data: Partial<Customer>) => api.post('/customers', data).then(res => res.data),
   updateCustomer: (id: string, data: Partial<Customer>) =>
     api.put(`/customers/${id}`, data).then(res => res.data),
   deleteCustomer: (id: string) => api.delete(`/customers/${id}`),
+
+  createTag: (data: { name: string }) => api.post<Tag>('/tags', data).then(res => res.data),
+  getTags: () => api.get<Tag[]>('/tags').then(res => res.data),
+  updateTag: (id: string, data: { name: string }) =>
+    api.put<Tag>(`/tags/${id}`, data).then(res => res.data),
+  deleteTag: (id: string) => api.delete(`/tags/${id}`),
+  assignTagToCustomer: (customerId: string, tagId: string) =>
+    api.post(`/customers/${customerId}/tags/${tagId}`),
+  unassignTagFromCustomer: (customerId: string, tagId: string) =>
+    api.delete(`/customers/${customerId}/tags/${tagId}`),
+  assignTagToLead: (leadId: string, tagId: string) =>
+    api.post(`/leads/${leadId}/tags/${tagId}`),
+  unassignTagFromLead: (leadId: string, tagId: string) =>
+    api.delete(`/leads/${leadId}/tags/${tagId}`),
 
   getInteractions: (
     entity: 'customers' | 'leads',
