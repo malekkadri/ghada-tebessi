@@ -8,8 +8,18 @@ const { Op } = require('sequelize');
 // Customer CRUD
 const createCustomer = async (req, res) => {
   try {
+    // Clean payload to avoid sending invalid data (e.g. empty strings for integers)
+    const { vcardId, ...payload } = req.body;
+
+    // Only include vcardId if it is a valid number. An empty string or undefined
+    // causes Sequelize/MySQL to throw an error which resulted in a 500 response
+    // when creating a customer without selecting a vCard.
+    if (vcardId !== undefined && vcardId !== null && vcardId !== '') {
+      payload.vcardId = parseInt(vcardId, 10);
+    }
+
     const customer = await Customer.create({
-      ...req.body,
+      ...payload,
       userId: req.user.id,
     });
     res.status(201).json(customer);
