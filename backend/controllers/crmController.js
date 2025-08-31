@@ -102,8 +102,24 @@ const createLead = async (req, res) => {
 
 const getLeads = async (req, res) => {
   try {
+    const { search, sortBy = 'created_at', order = 'ASC' } = req.query;
+
+    const where = { userId: req.user.id };
+    if (search) {
+      where[Op.or] = [
+        { name: { [Op.like]: `%${search}%` } },
+        { email: { [Op.like]: `%${search}%` } },
+        { phone: { [Op.like]: `%${search}%` } },
+      ];
+    }
+
+    const allowedSortFields = ['name', 'email', 'created_at'];
+    const sortField = allowedSortFields.includes(sortBy) ? sortBy : 'created_at';
+    const sortOrder = order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
+
     const leads = await Lead.findAll({
-      where: { userId: req.user.id },
+      where,
+      order: [[sortField, sortOrder]],
     });
     res.json(leads);
   } catch (error) {

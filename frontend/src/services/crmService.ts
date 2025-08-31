@@ -43,7 +43,8 @@ export interface Interaction {
 }
 
 export const crmService = {
-  getLeads: () => api.get<Lead[]>('/leads').then(res => res.data),
+  getLeads: (params?: { search?: string; sortBy?: string; order?: 'asc' | 'desc' }) =>
+    api.get<Lead[]>('/leads', { params }).then(res => res.data),
   createLead: (data: Partial<Lead>) => api.post('/leads', data).then(res => res.data),
   updateLead: (id: string, data: Partial<Lead>) => api.put(`/leads/${id}`, data).then(res => res.data),
   deleteLead: (id: string) => api.delete(`/leads/${id}`),
