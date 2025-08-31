@@ -214,6 +214,7 @@ const convertLeadToCustomer = async (req, res) => {
       status: req.body.status || lead.status,
       notes: lead.notes,
       userId: lead.userId,
+      vcardId: lead.vcardId || req.body.vcardId,
     });
 
     if (lead.Tags && lead.Tags.length) {
@@ -319,6 +320,22 @@ const unassignTagFromCustomer = async (req, res) => {
     }
     await customer.removeTag(tag);
     res.status(204).end();
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
+const linkVcardToCustomer = async (req, res) => {
+  try {
+    const customer = await Customer.findOne({
+      where: { id: req.params.id, userId: req.user.id },
+    });
+    if (!customer) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+    customer.vcardId = req.body.vcardId;
+    await customer.save();
+    res.json(customer);
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });
   }
@@ -500,6 +517,7 @@ module.exports = {
   deleteTag,
   assignTagToCustomer,
   unassignTagFromCustomer,
+  linkVcardToCustomer,
   assignTagToLead,
   unassignTagFromLead,
   getInteractionsByCustomer,

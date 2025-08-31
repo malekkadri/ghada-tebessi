@@ -34,6 +34,15 @@ const Lead = sequelize.define('Lead', {
   notes: {
     type: DataTypes.TEXT,
     allowNull: true
+  },
+  vcardId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'vcards',
+      key: 'id'
+    },
+    onDelete: 'SET NULL'
   }
 }, {
   tableName: 'leads',
@@ -46,6 +55,10 @@ Lead.associate = (models) => {
   Lead.belongsTo(models.Users, {
     foreignKey: 'userId',
     as: 'Users'
+  });
+  Lead.belongsTo(models.VCard, {
+    foreignKey: 'vcardId',
+    as: 'Vcard'
   });
   Lead.hasMany(models.Interaction, {
     foreignKey: 'leadId',

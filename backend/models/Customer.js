@@ -35,6 +35,15 @@ const Customer = sequelize.define('Customer', {
   notes: {
     type: DataTypes.TEXT,
     allowNull: true
+  },
+  vcardId: {
+    type: DataTypes.INTEGER,
+    allowNull: true,
+    references: {
+      model: 'vcards',
+      key: 'id'
+    },
+    onDelete: 'SET NULL'
   }
 }, {
   tableName: 'customers',
@@ -47,6 +56,10 @@ Customer.associate = (models) => {
   Customer.belongsTo(models.Users, {
     foreignKey: 'userId',
     as: 'Users'
+  });
+  Customer.belongsTo(models.VCard, {
+    foreignKey: 'vcardId',
+    as: 'Vcard'
   });
   Customer.hasMany(models.Interaction, {
     foreignKey: 'customerId',
