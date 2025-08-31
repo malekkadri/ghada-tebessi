@@ -5,16 +5,21 @@ const Interaction = require('../models/Interaction');
 // Customer CRUD
 const createCustomer = async (req, res) => {
   try {
-    const customer = await Customer.create(req.body);
+    const customer = await Customer.create({
+      ...req.body,
+      userId: req.user.id,
+    });
     res.status(201).json(customer);
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });
   }
 };
 
-const getCustomers = async (_req, res) => {
+const getCustomers = async (req, res) => {
   try {
-    const customers = await Customer.findAll();
+    const customers = await Customer.findAll({
+      where: { userId: req.user.id },
+    });
     res.json(customers);
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });
@@ -23,7 +28,9 @@ const getCustomers = async (_req, res) => {
 
 const getCustomerById = async (req, res) => {
   try {
-    const customer = await Customer.findByPk(req.params.id);
+    const customer = await Customer.findOne({
+      where: { id: req.params.id, userId: req.user.id },
+    });
     if (!customer) {
       return res.status(404).json({ error: 'Customer not found' });
     }
@@ -36,7 +43,7 @@ const getCustomerById = async (req, res) => {
 const updateCustomer = async (req, res) => {
   try {
     const [updated] = await Customer.update(req.body, {
-      where: { id: req.params.id }
+      where: { id: req.params.id, userId: req.user.id },
     });
     if (!updated) {
       return res.status(404).json({ error: 'Customer not found' });
@@ -50,7 +57,9 @@ const updateCustomer = async (req, res) => {
 
 const deleteCustomer = async (req, res) => {
   try {
-    const customer = await Customer.findByPk(req.params.id);
+    const customer = await Customer.findOne({
+      where: { id: req.params.id, userId: req.user.id },
+    });
     if (!customer) {
       return res.status(404).json({ error: 'Customer not found' });
     }
@@ -64,16 +73,21 @@ const deleteCustomer = async (req, res) => {
 // Lead CRUD
 const createLead = async (req, res) => {
   try {
-    const lead = await Lead.create(req.body);
+    const lead = await Lead.create({
+      ...req.body,
+      userId: req.user.id,
+    });
     res.status(201).json(lead);
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });
   }
 };
 
-const getLeads = async (_req, res) => {
+const getLeads = async (req, res) => {
   try {
-    const leads = await Lead.findAll();
+    const leads = await Lead.findAll({
+      where: { userId: req.user.id },
+    });
     res.json(leads);
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });
@@ -82,7 +96,9 @@ const getLeads = async (_req, res) => {
 
 const getLeadById = async (req, res) => {
   try {
-    const lead = await Lead.findByPk(req.params.id);
+    const lead = await Lead.findOne({
+      where: { id: req.params.id, userId: req.user.id },
+    });
     if (!lead) {
       return res.status(404).json({ error: 'Lead not found' });
     }
@@ -95,7 +111,7 @@ const getLeadById = async (req, res) => {
 const updateLead = async (req, res) => {
   try {
     const [updated] = await Lead.update(req.body, {
-      where: { id: req.params.id }
+      where: { id: req.params.id, userId: req.user.id },
     });
     if (!updated) {
       return res.status(404).json({ error: 'Lead not found' });
@@ -109,7 +125,9 @@ const updateLead = async (req, res) => {
 
 const deleteLead = async (req, res) => {
   try {
-    const lead = await Lead.findByPk(req.params.id);
+    const lead = await Lead.findOne({
+      where: { id: req.params.id, userId: req.user.id },
+    });
     if (!lead) {
       return res.status(404).json({ error: 'Lead not found' });
     }
@@ -124,7 +142,7 @@ const deleteLead = async (req, res) => {
 const getInteractionsByCustomer = async (req, res) => {
   try {
     const interactions = await Interaction.findAll({
-      where: { customerId: req.params.id }
+      where: { customerId: req.params.id, userId: req.user.id },
     });
     res.json(interactions);
   } catch (error) {
@@ -136,7 +154,8 @@ const createInteractionForCustomer = async (req, res) => {
   try {
     const interaction = await Interaction.create({
       ...req.body,
-      customerId: req.params.id
+      customerId: req.params.id,
+      userId: req.user.id,
     });
     res.status(201).json(interaction);
   } catch (error) {
@@ -146,16 +165,21 @@ const createInteractionForCustomer = async (req, res) => {
 
 const createInteraction = async (req, res) => {
   try {
-    const interaction = await Interaction.create(req.body);
+    const interaction = await Interaction.create({
+      ...req.body,
+      userId: req.user.id,
+    });
     res.status(201).json(interaction);
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });
   }
 };
 
-const getInteractions = async (_req, res) => {
+const getInteractions = async (req, res) => {
   try {
-    const interactions = await Interaction.findAll();
+    const interactions = await Interaction.findAll({
+      where: { userId: req.user.id },
+    });
     res.json(interactions);
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });
@@ -164,7 +188,9 @@ const getInteractions = async (_req, res) => {
 
 const getInteractionById = async (req, res) => {
   try {
-    const interaction = await Interaction.findByPk(req.params.id);
+    const interaction = await Interaction.findOne({
+      where: { id: req.params.id, userId: req.user.id },
+    });
     if (!interaction) {
       return res.status(404).json({ error: 'Interaction not found' });
     }
@@ -177,7 +203,7 @@ const getInteractionById = async (req, res) => {
 const updateInteraction = async (req, res) => {
   try {
     const [updated] = await Interaction.update(req.body, {
-      where: { id: req.params.id }
+      where: { id: req.params.id, userId: req.user.id },
     });
     if (!updated) {
       return res.status(404).json({ error: 'Interaction not found' });
@@ -191,7 +217,9 @@ const updateInteraction = async (req, res) => {
 
 const deleteInteraction = async (req, res) => {
   try {
-    const interaction = await Interaction.findByPk(req.params.id);
+    const interaction = await Interaction.findOne({
+      where: { id: req.params.id, userId: req.user.id },
+    });
     if (!interaction) {
       return res.status(404).json({ error: 'Interaction not found' });
     }
