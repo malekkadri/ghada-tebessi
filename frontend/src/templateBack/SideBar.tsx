@@ -54,8 +54,9 @@ const Sidebar: React.FC<SidebarProps> = ({
   };
 
   const menuItems = useMemo(() => {
-    
+
     const commonItems = [
+      { type: 'section', label: 'Main' },
       {
         path: `${basePath}/dashboard`,
         icon: (
@@ -138,6 +139,7 @@ const Sidebar: React.FC<SidebarProps> = ({
     if (role === 'superAdmin') {
       return [
         ...commonItems,
+        { type: 'section', label: 'Administration' },
         {
           path: `${basePath}/users`,
           icon: (

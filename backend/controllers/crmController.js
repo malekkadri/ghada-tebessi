@@ -163,6 +163,30 @@ const createInteractionForCustomer = async (req, res) => {
   }
 };
 
+const getInteractionsByLead = async (req, res) => {
+  try {
+    const interactions = await Interaction.findAll({
+      where: { leadId: req.params.id, userId: req.user.id },
+    });
+    res.json(interactions);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
+const createInteractionForLead = async (req, res) => {
+  try {
+    const interaction = await Interaction.create({
+      ...req.body,
+      leadId: req.params.id,
+      userId: req.user.id,
+    });
+    res.status(201).json(interaction);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
 const createInteraction = async (req, res) => {
   try {
     const interaction = await Interaction.create({
@@ -243,6 +267,8 @@ module.exports = {
   deleteLead,
   getInteractionsByCustomer,
   createInteractionForCustomer,
+  getInteractionsByLead,
+  createInteractionForLead,
   createInteraction,
   getInteractions,
   getInteractionById,
