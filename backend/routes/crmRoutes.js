@@ -20,6 +20,7 @@ router.get('/leads', requireAuth, crmController.getLeads);
 router.get('/leads/:id', requireAuth, crmController.getLeadById);
 router.put('/leads/:id', requireAuth, crmController.updateLead);
 router.delete('/leads/:id', requireAuth, crmController.deleteLead);
+router.post('/leads/:id/convert', requireAuth, crmController.convertLeadToCustomer);
 router.get('/leads/:id/interactions', requireAuth, crmController.getInteractionsByLead);
 router.post('/leads/:id/interactions', requireAuth, crmController.createInteractionForLead);
 router.post('/leads/:id/tags/:tagId', requireAuth, crmController.assignTagToLead);

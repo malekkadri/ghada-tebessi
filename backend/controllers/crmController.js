@@ -196,6 +196,38 @@ const deleteLead = async (req, res) => {
   }
 };
 
+// Convert a lead to a customer
+const convertLeadToCustomer = async (req, res) => {
+  try {
+    const lead = await Lead.findOne({
+      where: { id: req.params.id, userId: req.user.id },
+      include: [{ model: Tag, as: 'Tags' }],
+    });
+    if (!lead) {
+      return res.status(404).json({ error: 'Lead not found' });
+    }
+
+    const customer = await Customer.create({
+      name: lead.name,
+      email: lead.email,
+      phone: lead.phone,
+      status: req.body.status || lead.status,
+      notes: lead.notes,
+      userId: lead.userId,
+    });
+
+    if (lead.Tags && lead.Tags.length) {
+      await customer.addTags(lead.Tags);
+    }
+
+    await lead.destroy();
+
+    res.status(201).json(customer);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
 // Tag CRUD
 const createTag = async (req, res) => {
   try {
@@ -461,6 +493,7 @@ module.exports = {
   getLeadById,
   updateLead,
   deleteLead,
+  convertLeadToCustomer,
   createTag,
   getTags,
   updateTag,
