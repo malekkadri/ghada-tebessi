@@ -103,8 +103,9 @@ const deleteCustomer = async (req, res) => {
 // Lead CRUD
 const createLead = async (req, res) => {
   try {
+    const { vcardId, ...leadData } = req.body;
     const lead = await Lead.create({
-      ...req.body,
+      ...leadData,
       userId: req.user.id,
     });
     res.status(201).json(lead);
@@ -166,7 +167,8 @@ const getLeadById = async (req, res) => {
 
 const updateLead = async (req, res) => {
   try {
-    const [updated] = await Lead.update(req.body, {
+    const { vcardId, ...updateData } = req.body;
+    const [updated] = await Lead.update(updateData, {
       where: { id: req.params.id, userId: req.user.id },
     });
     if (!updated) {
@@ -214,7 +216,7 @@ const convertLeadToCustomer = async (req, res) => {
       status: req.body.status || lead.status,
       notes: lead.notes,
       userId: lead.userId,
-      vcardId: lead.vcardId || req.body.vcardId,
+      vcardId: req.body.vcardId || null,
     });
 
     if (lead.Tags && lead.Tags.length) {
