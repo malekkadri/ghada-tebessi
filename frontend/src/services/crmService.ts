@@ -44,7 +44,11 @@ export const crmService = {
   updateLead: (id: string, data: Partial<Lead>) => api.put(`/leads/${id}`, data).then(res => res.data),
   deleteLead: (id: string) => api.delete(`/leads/${id}`),
 
-  getCustomers: () => api.get<Customer[]>('/customers').then(res => res.data),
+  getCustomers: (params?: {
+    search?: string;
+    sortBy?: string;
+    order?: 'asc' | 'desc';
+  }) => api.get<Customer[]>('/customers', { params }).then(res => res.data),
   createCustomer: (data: Partial<Customer>) => api.post('/customers', data).then(res => res.data),
   updateCustomer: (id: string, data: Partial<Customer>) =>
     api.put(`/customers/${id}`, data).then(res => res.data),
