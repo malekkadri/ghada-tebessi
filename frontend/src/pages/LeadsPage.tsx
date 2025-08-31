@@ -6,7 +6,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 const LeadsPage: React.FC = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [stageFilter, setStageFilter] = useState<string>();
-  const [form, setForm] = useState({ name: '', email: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', status: 'New', notes: '' });
+  const [editingLead, setEditingLead] = useState<Lead | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', email: '', phone: '', status: '', notes: '' });
   const navigate = useNavigate();
   const location = useLocation();
   const basePath = location.pathname.startsWith('/super-admin') ? '/super-admin' : '/admin';
@@ -24,16 +26,20 @@ const LeadsPage: React.FC = () => {
     ? leads.filter(l => l.status === stageFilter)
     : leads;
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+    setEditForm({ ...editForm, [e.target.name]: e.target.value });
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
-      const newLead = await crmService.createLead({ ...form, status: 'New' });
+      const newLead = await crmService.createLead(form);
       setLeads([...leads, newLead]);
-      setForm({ name: '', email: '' });
+      setForm({ name: '', email: '', phone: '', status: 'New', notes: '' });
     } catch (error) {
       console.error('Failed to create lead', error);
     }
@@ -48,12 +54,24 @@ const LeadsPage: React.FC = () => {
     }
   };
 
-  const handleEdit = async (lead: Lead) => {
-    const name = prompt('Name', lead.name);
-    if (!name) return;
+  const handleEdit = (lead: Lead) => {
+    setEditingLead(lead);
+    setEditForm({
+      name: lead.name,
+      email: lead.email || '',
+      phone: lead.phone || '',
+      status: lead.status || 'New',
+      notes: lead.notes || '',
+    });
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingLead) return;
     try {
-      const updated = await crmService.updateLead(lead.id, { name });
-      setLeads(leads.map(l => (l.id === lead.id ? updated : l)));
+      const updated = await crmService.updateLead(editingLead.id, editForm);
+      setLeads(leads.map(l => (l.id === editingLead.id ? updated : l)));
+      setEditingLead(null);
     } catch (error) {
       console.error('Failed to update lead', error);
     }
@@ -77,10 +95,85 @@ const LeadsPage: React.FC = () => {
           placeholder="Email"
           className="w-full p-2 border rounded"
         />
+        <input
+          name="phone"
+          value={form.phone}
+          onChange={handleChange}
+          placeholder="Phone"
+          className="w-full p-2 border rounded"
+        />
+        <select
+          name="status"
+          value={form.status}
+          onChange={handleChange}
+          className="w-full p-2 border rounded"
+        >
+          {stages.map(stage => (
+            <option key={stage} value={stage}>
+              {stage}
+            </option>
+          ))}
+        </select>
+        <textarea
+          name="notes"
+          value={form.notes}
+          onChange={handleChange}
+          placeholder="Notes"
+          className="w-full p-2 border rounded"
+        />
         <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">
           Add Lead
         </button>
       </form>
+
+      {editingLead && (
+        <form onSubmit={handleEditSubmit} className="space-y-2 max-w-sm">
+          <h2 className="text-xl font-semibold">Edit Lead</h2>
+          <input
+            name="name"
+            value={editForm.name}
+            onChange={handleEditChange}
+            placeholder="Name"
+            className="w-full p-2 border rounded"
+          />
+          <input
+            name="email"
+            value={editForm.email}
+            onChange={handleEditChange}
+            placeholder="Email"
+            className="w-full p-2 border rounded"
+          />
+          <input
+            name="phone"
+            value={editForm.phone}
+            onChange={handleEditChange}
+            placeholder="Phone"
+            className="w-full p-2 border rounded"
+          />
+          <select
+            name="status"
+            value={editForm.status}
+            onChange={handleEditChange}
+            className="w-full p-2 border rounded"
+          >
+            {stages.map(stage => (
+              <option key={stage} value={stage}>
+                {stage}
+              </option>
+            ))}
+          </select>
+          <textarea
+            name="notes"
+            value={editForm.notes}
+            onChange={handleEditChange}
+            placeholder="Notes"
+            className="w-full p-2 border rounded"
+          />
+          <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded">
+            Save
+          </button>
+        </form>
+      )}
       <PipelineStage stages={stages} current={stageFilter} onStageClick={setStageFilter} />
       <div className="overflow-x-auto">
         <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
@@ -88,6 +181,7 @@ const LeadsPage: React.FC = () => {
             <tr>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Phone</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
             </tr>
@@ -97,6 +191,7 @@ const LeadsPage: React.FC = () => {
               <tr key={lead.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">{lead.name}</td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{lead.email}</td>
+                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{lead.phone}</td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{lead.status}</td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm space-x-2">
                   <button

@@ -4,7 +4,9 @@ import { useNavigate, useLocation } from 'react-router-dom';
 
 const CustomersPage: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [form, setForm] = useState({ name: '', email: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', status: '', notes: '' });
+  const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [editForm, setEditForm] = useState({ name: '', email: '', phone: '', status: '', notes: '' });
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
@@ -19,8 +21,12 @@ const CustomersPage: React.FC = () => {
       .catch(err => console.error('Failed to load customers', err));
   }, [search, sortBy, order]);
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setForm({ ...form, [e.target.name]: e.target.value });
+  };
+
+  const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
+    setEditForm({ ...editForm, [e.target.name]: e.target.value });
   };
 
   const handleSearchChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -32,7 +38,7 @@ const CustomersPage: React.FC = () => {
     try {
       const newCustomer = await crmService.createCustomer(form);
       setCustomers([...customers, newCustomer]);
-      setForm({ name: '', email: '' });
+      setForm({ name: '', email: '', phone: '', status: '', notes: '' });
     } catch (error) {
       console.error('Failed to create customer', error);
     }
@@ -47,12 +53,24 @@ const CustomersPage: React.FC = () => {
     }
   };
 
-  const handleEdit = async (customer: Customer) => {
-    const name = prompt('Name', customer.name);
-    if (!name) return;
+  const handleEdit = (customer: Customer) => {
+    setEditingCustomer(customer);
+    setEditForm({
+      name: customer.name,
+      email: customer.email || '',
+      phone: customer.phone || '',
+      status: customer.status || '',
+      notes: customer.notes || '',
+    });
+  };
+
+  const handleEditSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!editingCustomer) return;
     try {
-      const updated = await crmService.updateCustomer(customer.id, { name });
-      setCustomers(customers.map(c => (c.id === customer.id ? updated : c)));
+      const updated = await crmService.updateCustomer(editingCustomer.id, editForm);
+      setCustomers(customers.map(c => (c.id === editingCustomer.id ? updated : c)));
+      setEditingCustomer(null);
     } catch (error) {
       console.error('Failed to update customer', error);
     }
@@ -101,10 +119,75 @@ const CustomersPage: React.FC = () => {
           placeholder="Email"
           className="w-full p-2 border rounded"
         />
+        <input
+          name="phone"
+          value={form.phone}
+          onChange={handleChange}
+          placeholder="Phone"
+          className="w-full p-2 border rounded"
+        />
+        <input
+          name="status"
+          value={form.status}
+          onChange={handleChange}
+          placeholder="Status"
+          className="w-full p-2 border rounded"
+        />
+        <textarea
+          name="notes"
+          value={form.notes}
+          onChange={handleChange}
+          placeholder="Notes"
+          className="w-full p-2 border rounded"
+        />
         <button type="submit" className="px-4 py-2 bg-blue-600 text-white rounded">
           Add Customer
         </button>
       </form>
+
+      {editingCustomer && (
+        <form onSubmit={handleEditSubmit} className="space-y-2 max-w-sm">
+          <h2 className="text-xl font-semibold">Edit Customer</h2>
+          <input
+            name="name"
+            value={editForm.name}
+            onChange={handleEditChange}
+            placeholder="Name"
+            className="w-full p-2 border rounded"
+          />
+          <input
+            name="email"
+            value={editForm.email}
+            onChange={handleEditChange}
+            placeholder="Email"
+            className="w-full p-2 border rounded"
+          />
+          <input
+            name="phone"
+            value={editForm.phone}
+            onChange={handleEditChange}
+            placeholder="Phone"
+            className="w-full p-2 border rounded"
+          />
+          <input
+            name="status"
+            value={editForm.status}
+            onChange={handleEditChange}
+            placeholder="Status"
+            className="w-full p-2 border rounded"
+          />
+          <textarea
+            name="notes"
+            value={editForm.notes}
+            onChange={handleEditChange}
+            placeholder="Notes"
+            className="w-full p-2 border rounded"
+          />
+          <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded">
+            Save
+          </button>
+        </form>
+      )}
       {customers.length === 0 ? (
         <p className="text-gray-500">No customers found.</p>
       ) : (
@@ -114,6 +197,8 @@ const CustomersPage: React.FC = () => {
               <tr>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Phone</th>
+                <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
                 <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
               </tr>
             </thead>
@@ -122,6 +207,8 @@ const CustomersPage: React.FC = () => {
                 <tr key={customer.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">{customer.name}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{customer.email}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{customer.phone}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{customer.status}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm space-x-2">
                     <button
                       className="text-blue-600"
