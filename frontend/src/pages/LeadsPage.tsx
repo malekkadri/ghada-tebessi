@@ -353,6 +353,16 @@ const LeadsPage: React.FC = () => {
                     Interactions
                   </button>
                   <button
+                    className="text-purple-600"
+                    onClick={() =>
+                      navigate(
+                        `${basePath}/crm/tasks/${lead.id}?type=lead`
+                      )
+                    }
+                  >
+                    Tasks
+                  </button>
+                  <button
                     className="text-green-600"
                     onClick={() => handleEdit(lead)}
                   >

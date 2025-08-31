@@ -52,6 +52,10 @@ Lead.associate = (models) => {
     as: 'Interactions',
     onDelete: 'CASCADE'
   });
+  Lead.hasMany(models.Task, {
+    foreignKey: 'leadId',
+    as: 'Tasks',
+    onDelete: 'SET NULL'
   Lead.belongsToMany(models.Tag, {
     through: models.LeadTag,
     foreignKey: 'leadId',

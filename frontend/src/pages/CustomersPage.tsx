@@ -316,21 +316,31 @@ const CustomersPage: React.FC = () => {
                     {customer.Tags?.map(t => t.name).join(', ')}
                   </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm space-x-2">
-                    <button
-                      className="text-blue-600"
-                      onClick={() =>
-                        navigate(
-                          `${basePath}/crm/interactions/${customer.id}?type=customer`
-                        )
-                      }
-                    >
-                      Interactions
-                    </button>
-                    <button
-                      className="text-green-600"
-                      onClick={() => handleEdit(customer)}
-                    >
-                      Edit
+                  <button
+                    className="text-blue-600"
+                    onClick={() =>
+                      navigate(
+                        `${basePath}/crm/interactions/${customer.id}?type=customer`
+                      )
+                    }
+                  >
+                    Interactions
+                  </button>
+                  <button
+                    className="text-purple-600"
+                    onClick={() =>
+                      navigate(
+                        `${basePath}/crm/tasks/${customer.id}?type=customer`
+                      )
+                    }
+                  >
+                    Tasks
+                  </button>
+                  <button
+                    className="text-green-600"
+                    onClick={() => handleEdit(customer)}
+                  >
+                    Edit
                     </button>
                     <button
                       className="text-red-600"
