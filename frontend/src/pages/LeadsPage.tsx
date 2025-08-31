@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { crmService, Lead } from '../services/crmService';
-import CustomerCard from '../components/CustomerCard';
 import PipelineStage from '../components/PipelineStage';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -83,16 +82,46 @@ const LeadsPage: React.FC = () => {
         </button>
       </form>
       <PipelineStage stages={stages} current={stageFilter} onStageClick={setStageFilter} />
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {filteredLeads.map(lead => (
-          <CustomerCard
-            key={lead.id}
-            customer={lead}
-            onClick={() => navigate(`${basePath}/crm/interactions/${lead.id}`)}
-            onEdit={() => handleEdit(lead)}
-            onDelete={() => handleDelete(lead.id)}
-          />
-        ))}
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-700">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            {filteredLeads.map(lead => (
+              <tr key={lead.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">{lead.name}</td>
+                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{lead.email}</td>
+                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{lead.status}</td>
+                <td className="px-4 py-4 whitespace-nowrap text-sm space-x-2">
+                  <button
+                    className="text-blue-600"
+                    onClick={() => navigate(`${basePath}/crm/interactions/${lead.id}`)}
+                  >
+                    Interactions
+                  </button>
+                  <button
+                    className="text-green-600"
+                    onClick={() => handleEdit(lead)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="text-red-600"
+                    onClick={() => handleDelete(lead.id)}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );

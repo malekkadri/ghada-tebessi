@@ -1,6 +1,5 @@
 import React, { useEffect, useState } from 'react';
 import { crmService, Customer } from '../services/crmService';
-import CustomerCard from '../components/CustomerCard';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const CustomersPage: React.FC = () => {
@@ -74,16 +73,44 @@ const CustomersPage: React.FC = () => {
           Add Customer
         </button>
       </form>
-      <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-        {customers.map(customer => (
-          <CustomerCard
-            key={customer.id}
-            customer={customer}
-            onClick={() => navigate(`${basePath}/crm/interactions/${customer.id}`)}
-            onEdit={() => handleEdit(customer)}
-            onDelete={() => handleDelete(customer.id)}
-          />
-        ))}
+      <div className="overflow-x-auto">
+        <table className="min-w-full divide-y divide-gray-200 dark:divide-gray-700">
+          <thead className="bg-gray-50 dark:bg-gray-700">
+            <tr>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Name</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
+            </tr>
+          </thead>
+          <tbody className="bg-white dark:bg-gray-800 divide-y divide-gray-200 dark:divide-gray-700">
+            {customers.map(customer => (
+              <tr key={customer.id} className="hover:bg-gray-50 dark:hover:bg-gray-700">
+                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">{customer.name}</td>
+                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{customer.email}</td>
+                <td className="px-4 py-4 whitespace-nowrap text-sm space-x-2">
+                  <button
+                    className="text-blue-600"
+                    onClick={() => navigate(`${basePath}/crm/interactions/${customer.id}`)}
+                  >
+                    Interactions
+                  </button>
+                  <button
+                    className="text-green-600"
+                    onClick={() => handleEdit(customer)}
+                  >
+                    Edit
+                  </button>
+                  <button
+                    className="text-red-600"
+                    onClick={() => handleDelete(customer.id)}
+                  >
+                    Delete
+                  </button>
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
