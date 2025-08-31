@@ -56,6 +56,7 @@ Lead.associate = (models) => {
     foreignKey: 'leadId',
     as: 'Tasks',
     onDelete: 'SET NULL'
+  });
   Lead.belongsToMany(models.Tag, {
     through: models.LeadTag,
     foreignKey: 'leadId',
