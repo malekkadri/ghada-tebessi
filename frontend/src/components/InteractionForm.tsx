@@ -2,11 +2,12 @@ import React, { useState } from 'react';
 import { crmService } from '../services/crmService';
 
 interface InteractionFormProps {
-  customerId: string;
+  entityId: string;
+  entityType: 'customers' | 'leads';
   onSaved?: () => void;
 }
 
-const InteractionForm: React.FC<InteractionFormProps> = ({ customerId, onSaved }) => {
+const InteractionForm: React.FC<InteractionFormProps> = ({ entityId, entityType, onSaved }) => {
   const [form, setForm] = useState({ type: '', date: '', notes: '' });
   const [loading, setLoading] = useState(false);
 
@@ -20,7 +21,7 @@ const InteractionForm: React.FC<InteractionFormProps> = ({ customerId, onSaved }
     e.preventDefault();
     setLoading(true);
     try {
-      await crmService.createInteraction(customerId, form);
+      await crmService.createInteraction(entityType, entityId, form);
       setForm({ type: '', date: '', notes: '' });
       onSaved?.();
     } catch (error) {

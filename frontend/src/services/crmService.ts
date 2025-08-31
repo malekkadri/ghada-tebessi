@@ -58,12 +58,17 @@ export const crmService = {
     api.put(`/customers/${id}`, data).then(res => res.data),
   deleteCustomer: (id: string) => api.delete(`/customers/${id}`),
 
-  getInteractions: (customerId: string) =>
-    api.get<Interaction[]>(`/customers/${customerId}/interactions`).then(res => res.data),
+  getInteractions: (
+    entity: 'customers' | 'leads',
+    id: string
+  ) => api
+    .get<Interaction[]>(`/${entity}/${id}/interactions`)
+    .then(res => res.data),
   createInteraction: (
-    customerId: string,
+    entity: 'customers' | 'leads',
+    id: string,
     data: { type: string; date?: string; notes?: string }
-  ) => api.post(`/customers/${customerId}/interactions`, data).then(res => res.data),
+  ) => api.post(`/${entity}/${id}/interactions`, data).then(res => res.data),
   updateInteraction: (
     id: string,
     data: { type?: string; date?: string; notes?: string }

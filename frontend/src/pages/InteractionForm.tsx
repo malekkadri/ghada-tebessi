@@ -1,10 +1,13 @@
 import React, { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useSearchParams } from 'react-router-dom';
 import InteractionForm from '../components/InteractionForm';
 import { crmService, Interaction } from '../services/crmService';
 
 const InteractionsPage: React.FC = () => {
   const { id } = useParams<{ id: string }>();
+  const [searchParams] = useSearchParams();
+  const entityType =
+    (searchParams.get('type') === 'lead' ? 'leads' : 'customers') as 'customers' | 'leads';
   const [interactions, setInteractions] = useState<Interaction[]>([]);
   const [editingInteraction, setEditingInteraction] = useState<Interaction | null>(null);
   const [editForm, setEditForm] = useState({ type: '', date: '', notes: '' });
@@ -12,14 +15,14 @@ const InteractionsPage: React.FC = () => {
   const loadInteractions = () => {
     if (!id) return;
     crmService
-      .getInteractions(id)
+      .getInteractions(entityType, id)
       .then(data => setInteractions(data))
       .catch(err => console.error('Failed to load interactions', err));
   };
 
   useEffect(() => {
     loadInteractions();
-  }, [id]);
+  }, [id, entityType]);
 
   const handleEdit = (interaction: Interaction) => {
     setEditingInteraction(interaction);
@@ -60,13 +63,17 @@ const InteractionsPage: React.FC = () => {
   };
 
   if (!id) {
-    return <div>No customer selected</div>;
+    return <div>No target selected</div>;
   }
 
   return (
     <div className="space-y-4 py-6">
       <h1 className="text-2xl font-semibold">Interactions</h1>
-      <InteractionForm customerId={id} onSaved={loadInteractions} />
+      <InteractionForm
+        entityId={id}
+        entityType={entityType}
+        onSaved={loadInteractions}
+      />
       {editingInteraction && (
         <form onSubmit={handleEditSubmit} className="space-y-2 max-w-sm">
           <h2 className="text-xl font-semibold">Edit Interaction</h2>
