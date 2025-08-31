@@ -53,6 +53,11 @@ Customer.associate = (models) => {
     as: 'Interactions',
     onDelete: 'CASCADE'
   });
+  Customer.belongsToMany(models.Tag, {
+    through: models.CustomerTag,
+    foreignKey: 'customerId',
+    as: 'Tags'
+  });
 };
 
 module.exports = Customer;

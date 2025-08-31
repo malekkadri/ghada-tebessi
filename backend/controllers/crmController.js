@@ -1,6 +1,7 @@
 const Customer = require('../models/Customer');
 const Lead = require('../models/Lead');
 const Interaction = require('../models/Interaction');
+const Tag = require('../models/Tag');
 const { Op } = require('sequelize');
 
 // Customer CRUD
@@ -18,7 +19,7 @@ const createCustomer = async (req, res) => {
 
 const getCustomers = async (req, res) => {
   try {
-    const { search, sortBy = 'created_at', order = 'ASC' } = req.query;
+    const { search, sortBy = 'created_at', order = 'ASC', tags } = req.query;
 
     const where = { userId: req.user.id };
     if (search) {
@@ -29,6 +30,13 @@ const getCustomers = async (req, res) => {
       ];
     }
 
+    const tagIds = tags ? tags.split(',') : null;
+    const include = [{ model: Tag, as: 'Tags', through: { attributes: [] } }];
+    if (tagIds) {
+      include[0].where = { id: tagIds };
+      include[0].required = true;
+    }
+
     const allowedSortFields = ['name', 'email', 'created_at'];
     const sortField = allowedSortFields.includes(sortBy) ? sortBy : 'created_at';
     const sortOrder = order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
@@ -36,6 +44,8 @@ const getCustomers = async (req, res) => {
     const customers = await Customer.findAll({
       where,
       order: [[sortField, sortOrder]],
+      include,
+      distinct: true,
     });
     res.json(customers);
   } catch (error) {
@@ -47,6 +57,7 @@ const getCustomerById = async (req, res) => {
   try {
     const customer = await Customer.findOne({
       where: { id: req.params.id, userId: req.user.id },
+      include: [{ model: Tag, as: 'Tags', through: { attributes: [] } }],
     });
     if (!customer) {
       return res.status(404).json({ error: 'Customer not found' });
@@ -65,7 +76,9 @@ const updateCustomer = async (req, res) => {
     if (!updated) {
       return res.status(404).json({ error: 'Customer not found' });
     }
-    const updatedCustomer = await Customer.findByPk(req.params.id);
+    const updatedCustomer = await Customer.findByPk(req.params.id, {
+      include: [{ model: Tag, as: 'Tags', through: { attributes: [] } }],
+    });
     res.json(updatedCustomer);
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });
@@ -102,7 +115,7 @@ const createLead = async (req, res) => {
 
 const getLeads = async (req, res) => {
   try {
-    const { search, sortBy = 'created_at', order = 'ASC' } = req.query;
+    const { search, sortBy = 'created_at', order = 'ASC', tags } = req.query;
 
     const where = { userId: req.user.id };
     if (search) {
@@ -113,6 +126,13 @@ const getLeads = async (req, res) => {
       ];
     }
 
+    const tagIds = tags ? tags.split(',') : null;
+    const include = [{ model: Tag, as: 'Tags', through: { attributes: [] } }];
+    if (tagIds) {
+      include[0].where = { id: tagIds };
+      include[0].required = true;
+    }
+
     const allowedSortFields = ['name', 'email', 'created_at'];
     const sortField = allowedSortFields.includes(sortBy) ? sortBy : 'created_at';
     const sortOrder = order.toUpperCase() === 'DESC' ? 'DESC' : 'ASC';
@@ -120,6 +140,8 @@ const getLeads = async (req, res) => {
     const leads = await Lead.findAll({
       where,
       order: [[sortField, sortOrder]],
+      include,
+      distinct: true,
     });
     res.json(leads);
   } catch (error) {
@@ -131,6 +153,7 @@ const getLeadById = async (req, res) => {
   try {
     const lead = await Lead.findOne({
       where: { id: req.params.id, userId: req.user.id },
+      include: [{ model: Tag, as: 'Tags', through: { attributes: [] } }],
     });
     if (!lead) {
       return res.status(404).json({ error: 'Lead not found' });
@@ -149,7 +172,9 @@ const updateLead = async (req, res) => {
     if (!updated) {
       return res.status(404).json({ error: 'Lead not found' });
     }
-    const updatedLead = await Lead.findByPk(req.params.id);
+    const updatedLead = await Lead.findByPk(req.params.id, {
+      include: [{ model: Tag, as: 'Tags', through: { attributes: [] } }],
+    });
     res.json(updatedLead);
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });
@@ -171,10 +196,12 @@ const deleteLead = async (req, res) => {
   }
 };
 
+// Convert a lead to a customer (preserve tags)
 const convertLeadToCustomer = async (req, res) => {
   try {
     const lead = await Lead.findOne({
       where: { id: req.params.id, userId: req.user.id },
+      include: [{ model: Tag, as: 'Tags' }],
     });
     if (!lead) {
       return res.status(404).json({ error: 'Lead not found' });
@@ -189,9 +216,151 @@ const convertLeadToCustomer = async (req, res) => {
       userId: lead.userId,
     });
 
+    if (lead.Tags && lead.Tags.length) {
+      await customer.addTags(lead.Tags);
+    }
+
     await lead.destroy();
 
     res.status(201).json(customer);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
+// Tag CRUD
+const createTag = async (req, res) => {
+  try {
+    const tag = await Tag.create({
+      name: req.body.name,
+      userId: req.user.id,
+    });
+    res.status(201).json(tag);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
+const getTags = async (req, res) => {
+  try {
+    const tags = await Tag.findAll({ where: { userId: req.user.id } });
+    res.json(tags);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
+const updateTag = async (req, res) => {
+  try {
+    const [updated] = await Tag.update(
+      { name: req.body.name },
+      { where: { id: req.params.id, userId: req.user.id } }
+    );
+    if (!updated) {
+      return res.status(404).json({ error: 'Tag not found' });
+    }
+    const tag = await Tag.findByPk(req.params.id);
+    res.json(tag);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
+const deleteTag = async (req, res) => {
+  try {
+    const tag = await Tag.findOne({
+      where: { id: req.params.id, userId: req.user.id },
+    });
+    if (!tag) {
+      return res.status(404).json({ error: 'Tag not found' });
+    }
+    await tag.destroy();
+    res.status(204).end();
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
+// Tag assignment
+const assignTagToCustomer = async (req, res) => {
+  try {
+    const customer = await Customer.findOne({
+      where: { id: req.params.id, userId: req.user.id },
+    });
+    if (!customer) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+    const tag = await Tag.findOne({
+      where: { id: req.params.tagId, userId: req.user.id },
+    });
+    if (!tag) {
+      return res.status(404).json({ error: 'Tag not found' });
+    }
+    await customer.addTag(tag);
+    res.status(204).end();
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
+const unassignTagFromCustomer = async (req, res) => {
+  try {
+    const customer = await Customer.findOne({
+      where: { id: req.params.id, userId: req.user.id },
+    });
+    if (!customer) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+    const tag = await Tag.findOne({
+      where: { id: req.params.tagId, userId: req.user.id },
+    });
+    if (!tag) {
+      return res.status(404).json({ error: 'Tag not found' });
+    }
+    await customer.removeTag(tag);
+    res.status(204).end();
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
+const assignTagToLead = async (req, res) => {
+  try {
+    const lead = await Lead.findOne({
+      where: { id: req.params.id, userId: req.user.id },
+    });
+    if (!lead) {
+      return res.status(404).json({ error: 'Lead not found' });
+    }
+    const tag = await Tag.findOne({
+      where: { id: req.params.tagId, userId: req.user.id },
+    });
+    if (!tag) {
+      return res.status(404).json({ error: 'Tag not found' });
+    }
+    await lead.addTag(tag);
+    res.status(204).end();
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
+const unassignTagFromLead = async (req, res) => {
+  try {
+    const lead = await Lead.findOne({
+      where: { id: req.params.id, userId: req.user.id },
+    });
+    if (!lead) {
+      return res.status(404).json({ error: 'Lead not found' });
+    }
+    const tag = await Tag.findOne({
+      where: { id: req.params.tagId, userId: req.user.id },
+    });
+    if (!tag) {
+      return res.status(404).json({ error: 'Tag not found' });
+    }
+    await lead.removeTag(tag);
+    res.status(204).end();
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });
   }
@@ -325,6 +494,14 @@ module.exports = {
   updateLead,
   deleteLead,
   convertLeadToCustomer,
+  createTag,
+  getTags,
+  updateTag,
+  deleteTag,
+  assignTagToCustomer,
+  unassignTagFromCustomer,
+  assignTagToLead,
+  unassignTagFromLead,
   getInteractionsByCustomer,
   createInteractionForCustomer,
   getInteractionsByLead,
@@ -333,5 +510,5 @@ module.exports = {
   getInteractions,
   getInteractionById,
   updateInteraction,
-  deleteInteraction
+  deleteInteraction,
 };
