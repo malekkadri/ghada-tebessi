@@ -1,5 +1,5 @@
 import React, { useEffect, useState } from 'react';
-import { crmService, Lead } from '../services/crmService';
+import { crmService, Lead, Tag } from '../services/crmService';
 import PipelineStage from '../components/PipelineStage';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -7,21 +7,33 @@ const LeadsPage: React.FC = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [stageFilter, setStageFilter] = useState<string>();
   const [form, setForm] = useState({ name: '', email: '', phone: '', status: 'New', notes: '' });
+  const [formTags, setFormTags] = useState<string[]>([]);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
   const [editForm, setEditForm] = useState({ name: '', email: '', phone: '', status: '', notes: '' });
+  const [editFormTags, setEditFormTags] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('name');
   const [order, setOrder] = useState<'asc' | 'desc'>('asc');
+  const [tags, setTags] = useState<Tag[]>([]);
+  const [newTag, setNewTag] = useState('');
+  const [filterTags, setFilterTags] = useState<string[]>([]);
   const navigate = useNavigate();
   const location = useLocation();
   const basePath = location.pathname.startsWith('/super-admin') ? '/super-admin' : '/admin';
 
   useEffect(() => {
     crmService
-      .getLeads({ search, sortBy, order })
+      .getTags()
+      .then(setTags)
+      .catch(err => console.error('Failed to load tags', err));
+  }, []);
+
+  useEffect(() => {
+    crmService
+      .getLeads({ search, sortBy, order, tags: filterTags })
       .then(data => setLeads(data))
       .catch(err => console.error('Failed to load leads', err));
-  }, [search, sortBy, order]);
+  }, [search, sortBy, order, filterTags]);
 
   const stages = ['New', 'Contacted', 'Qualified', 'Lost', 'Won'];
 
@@ -41,12 +53,40 @@ const LeadsPage: React.FC = () => {
     setSearch(e.target.value);
   };
 
+  const handleFormTagsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFormTags(Array.from(e.target.selectedOptions, option => option.value));
+  };
+
+  const handleEditTagsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setEditFormTags(Array.from(e.target.selectedOptions, option => option.value));
+  };
+
+  const handleFilterTagsChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
+    setFilterTags(Array.from(e.target.selectedOptions, option => option.value));
+  };
+
+  const handleCreateTag = async () => {
+    if (!newTag.trim()) return;
+    try {
+      const created = await crmService.createTag({ name: newTag.trim() });
+      setTags([...tags, created]);
+      setNewTag('');
+    } catch (error) {
+      console.error('Failed to create tag', error);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     try {
       const newLead = await crmService.createLead(form);
-      setLeads([...leads, newLead]);
+      for (const tagId of formTags) {
+        await crmService.assignTagToLead(newLead.id, tagId);
+      }
+      const refreshed = await crmService.getLeads({ search, sortBy, order, tags: filterTags });
+      setLeads(refreshed);
       setForm({ name: '', email: '', phone: '', status: 'New', notes: '' });
+      setFormTags([]);
     } catch (error) {
       console.error('Failed to create lead', error);
     }
@@ -80,14 +120,25 @@ const LeadsPage: React.FC = () => {
       status: lead.status || 'New',
       notes: lead.notes || '',
     });
+    setEditFormTags(lead.Tags?.map(t => t.id.toString()) || []);
   };
 
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingLead) return;
     try {
-      const updated = await crmService.updateLead(editingLead.id, editForm);
-      setLeads(leads.map(l => (l.id === editingLead.id ? updated : l)));
+      await crmService.updateLead(editingLead.id, editForm);
+      const prev = editingLead.Tags?.map(t => t.id.toString()) || [];
+      const toAdd = editFormTags.filter(id => !prev.includes(id));
+      const toRemove = prev.filter(id => !editFormTags.includes(id));
+      for (const id of toAdd) {
+        await crmService.assignTagToLead(editingLead.id, id);
+      }
+      for (const id of toRemove) {
+        await crmService.unassignTagFromLead(editingLead.id, id);
+      }
+      const refreshed = await crmService.getLeads({ search, sortBy, order, tags: filterTags });
+      setLeads(refreshed);
       setEditingLead(null);
     } catch (error) {
       console.error('Failed to update lead', error);
@@ -121,6 +172,33 @@ const LeadsPage: React.FC = () => {
           <option value="asc">Asc</option>
           <option value="desc">Desc</option>
         </select>
+        <select
+          multiple
+          value={filterTags}
+          onChange={handleFilterTagsChange}
+          className="p-2 border rounded"
+        >
+          {tags.map(tag => (
+            <option key={tag.id} value={tag.id}>
+              {tag.name}
+            </option>
+          ))}
+        </select>
+      </div>
+      <div className="flex gap-2">
+        <input
+          value={newTag}
+          onChange={e => setNewTag(e.target.value)}
+          placeholder="New tag"
+          className="p-2 border rounded"
+        />
+        <button
+          type="button"
+          onClick={handleCreateTag}
+          className="px-4 py-2 bg-blue-600 text-white rounded"
+        >
+          Add Tag
+        </button>
       </div>
       <form onSubmit={handleSubmit} className="space-y-2 max-w-sm">
         <input
@@ -153,6 +231,18 @@ const LeadsPage: React.FC = () => {
           {stages.map(stage => (
             <option key={stage} value={stage}>
               {stage}
+            </option>
+          ))}
+        </select>
+        <select
+          multiple
+          value={formTags}
+          onChange={handleFormTagsChange}
+          className="w-full p-2 border rounded"
+        >
+          {tags.map(tag => (
+            <option key={tag.id} value={tag.id}>
+              {tag.name}
             </option>
           ))}
         </select>
@@ -204,6 +294,18 @@ const LeadsPage: React.FC = () => {
               </option>
             ))}
           </select>
+          <select
+            multiple
+            value={editFormTags}
+            onChange={handleEditTagsChange}
+            className="w-full p-2 border rounded"
+          >
+            {tags.map(tag => (
+              <option key={tag.id} value={tag.id}>
+                {tag.name}
+              </option>
+            ))}
+          </select>
           <textarea
             name="notes"
             value={editForm.notes}
@@ -225,6 +327,7 @@ const LeadsPage: React.FC = () => {
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Email</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Phone</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Status</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Tags</th>
               <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 dark:text-gray-400 uppercase tracking-wider">Actions</th>
             </tr>
           </thead>
@@ -235,6 +338,9 @@ const LeadsPage: React.FC = () => {
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{lead.email}</td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{lead.phone}</td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{lead.status}</td>
+                <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                  {lead.Tags?.map(t => t.name).join(', ')}
+                </td>
                 <td className="px-4 py-4 whitespace-nowrap text-sm space-x-2">
                   <button
                     className="text-blue-600"

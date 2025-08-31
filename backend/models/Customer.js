@@ -57,6 +57,11 @@ Customer.associate = (models) => {
     foreignKey: 'customerId',
     as: 'Tasks',
     onDelete: 'SET NULL'
+
+  Customer.belongsToMany(models.Tag, {
+    through: models.CustomerTag,
+    foreignKey: 'customerId',
+    as: 'Tags'
   });
 };
 

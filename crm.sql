@@ -53,4 +53,28 @@ CREATE TABLE IF NOT EXISTS `tasks` (
   CONSTRAINT `fk_tasks_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_tasks_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers`(`id`) ON DELETE SET NULL,
   CONSTRAINT `fk_tasks_lead` FOREIGN KEY (`lead_id`) REFERENCES `leads`(`id`) ON DELETE SET NULL
+
+CREATE TABLE IF NOT EXISTS `tags` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `userId` INT NOT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT `fk_tags_user` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `customer_tags` (
+  `customerId` INT NOT NULL,
+  `tagId` INT NOT NULL,
+  PRIMARY KEY (`customerId`, `tagId`),
+  CONSTRAINT `fk_customer_tags_customer` FOREIGN KEY (`customerId`) REFERENCES `customers`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_customer_tags_tag` FOREIGN KEY (`tagId`) REFERENCES `tags`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `lead_tags` (
+  `leadId` INT NOT NULL,
+  `tagId` INT NOT NULL,
+  PRIMARY KEY (`leadId`, `tagId`),
+  CONSTRAINT `fk_lead_tags_lead` FOREIGN KEY (`leadId`) REFERENCES `leads`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_lead_tags_tag` FOREIGN KEY (`tagId`) REFERENCES `tags`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
