@@ -29,7 +29,8 @@ const Customer = sequelize.define('Customer', {
     references: {
       model: 'users',
       key: 'id'
-    }
+    },
+    onDelete: 'CASCADE'
   },
   notes: {
     type: DataTypes.TEXT,

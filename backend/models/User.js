@@ -157,7 +157,13 @@ User.associate = function(models) {
     foreignKey: 'userId',
     as: 'Payment',
   });
-  
+
+  User.hasMany(models.Customer, {
+    foreignKey: 'userId',
+    as: 'Customers',
+    onDelete: 'CASCADE'
+  });
+
   User.hasMany(models.Project, {
     foreignKey: 'userId',
     as: 'Project',
