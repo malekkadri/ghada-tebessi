@@ -171,6 +171,32 @@ const deleteLead = async (req, res) => {
   }
 };
 
+const convertLeadToCustomer = async (req, res) => {
+  try {
+    const lead = await Lead.findOne({
+      where: { id: req.params.id, userId: req.user.id },
+    });
+    if (!lead) {
+      return res.status(404).json({ error: 'Lead not found' });
+    }
+
+    const customer = await Customer.create({
+      name: lead.name,
+      email: lead.email,
+      phone: lead.phone,
+      status: req.body.status || lead.status,
+      notes: lead.notes,
+      userId: lead.userId,
+    });
+
+    await lead.destroy();
+
+    res.status(201).json(customer);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
 // Interaction CRUD
 const getInteractionsByCustomer = async (req, res) => {
   try {
@@ -298,6 +324,7 @@ module.exports = {
   getLeadById,
   updateLead,
   deleteLead,
+  convertLeadToCustomer,
   getInteractionsByCustomer,
   createInteractionForCustomer,
   getInteractionsByLead,
