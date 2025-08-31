@@ -1,15 +1,18 @@
 import React, { useEffect, useState } from 'react';
 import { crmService, Lead, Tag } from '../services/crmService';
+import { vcardService } from '../services/api';
+import { VCard } from '../services/vcard';
+import { useAuth } from '../context/AuthContext';
 import PipelineStage from '../components/PipelineStage';
 import { useNavigate, useLocation } from 'react-router-dom';
 
 const LeadsPage: React.FC = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [stageFilter, setStageFilter] = useState<string>();
-  const [form, setForm] = useState({ name: '', email: '', phone: '', status: 'New', notes: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', status: 'New', notes: '', vcardId: '' });
   const [formTags, setFormTags] = useState<string[]>([]);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', email: '', phone: '', status: '', notes: '' });
+  const [editForm, setEditForm] = useState({ name: '', email: '', phone: '', status: '', notes: '', vcardId: '' });
   const [editFormTags, setEditFormTags] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('name');
@@ -17,6 +20,8 @@ const LeadsPage: React.FC = () => {
   const [tags, setTags] = useState<Tag[]>([]);
   const [newTag, setNewTag] = useState('');
   const [filterTags, setFilterTags] = useState<string[]>([]);
+  const [vcards, setVcards] = useState<VCard[]>([]);
+  const { user } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
   const basePath = location.pathname.startsWith('/super-admin') ? '/super-admin' : '/admin';
@@ -27,6 +32,14 @@ const LeadsPage: React.FC = () => {
       .then(setTags)
       .catch(err => console.error('Failed to load tags', err));
   }, []);
+
+  useEffect(() => {
+    if (!user) return;
+    vcardService
+      .getAll(user.id)
+      .then(setVcards)
+      .catch(err => console.error('Failed to load vcards', err));
+  }, [user]);
 
   useEffect(() => {
     crmService
@@ -85,7 +98,7 @@ const LeadsPage: React.FC = () => {
       }
       const refreshed = await crmService.getLeads({ search, sortBy, order, tags: filterTags });
       setLeads(refreshed);
-      setForm({ name: '', email: '', phone: '', status: 'New', notes: '' });
+        setForm({ name: '', email: '', phone: '', status: 'New', notes: '', vcardId: '' });
       setFormTags([]);
     } catch (error) {
       console.error('Failed to create lead', error);
@@ -119,6 +132,7 @@ const LeadsPage: React.FC = () => {
       phone: lead.phone || '',
       status: lead.status || 'New',
       notes: lead.notes || '',
+      vcardId: lead.vcardId || '',
     });
     setEditFormTags(lead.Tags?.map(t => t.id.toString()) || []);
   };
@@ -246,6 +260,19 @@ const LeadsPage: React.FC = () => {
             </option>
           ))}
         </select>
+        <select
+          name="vcardId"
+          value={form.vcardId}
+          onChange={handleChange}
+          className="w-full p-2 border rounded"
+        >
+          <option value="">No VCard</option>
+          {vcards.map(vcard => (
+            <option key={vcard.id} value={vcard.id}>
+              {vcard.name}
+            </option>
+          ))}
+        </select>
         <textarea
           name="notes"
           value={form.notes}
@@ -298,19 +325,32 @@ const LeadsPage: React.FC = () => {
             multiple
             value={editFormTags}
             onChange={handleEditTagsChange}
-            className="w-full p-2 border rounded"
-          >
-            {tags.map(tag => (
-              <option key={tag.id} value={tag.id}>
-                {tag.name}
-              </option>
-            ))}
-          </select>
-          <textarea
-            name="notes"
-            value={editForm.notes}
-            onChange={handleEditChange}
-            placeholder="Notes"
+          className="w-full p-2 border rounded"
+        >
+          {tags.map(tag => (
+            <option key={tag.id} value={tag.id}>
+              {tag.name}
+            </option>
+          ))}
+        </select>
+        <select
+          name="vcardId"
+          value={editForm.vcardId}
+          onChange={handleEditChange}
+          className="w-full p-2 border rounded"
+        >
+          <option value="">No VCard</option>
+          {vcards.map(vcard => (
+            <option key={vcard.id} value={vcard.id}>
+              {vcard.name}
+            </option>
+          ))}
+        </select>
+        <textarea
+          name="notes"
+          value={editForm.notes}
+          onChange={handleEditChange}
+          placeholder="Notes"
             className="w-full p-2 border rounded"
           />
           <button type="submit" className="px-4 py-2 bg-green-600 text-white rounded">

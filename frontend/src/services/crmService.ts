@@ -26,6 +26,7 @@ export interface Lead {
   phone?: string;
   status?: string;
   notes?: string;
+  vcardId?: string;
   Tags?: Tag[];
 }
 
@@ -36,6 +37,7 @@ export interface Customer {
   phone?: string;
   status?: string;
   notes?: string;
+  vcardId?: string;
   Tags?: Tag[];
 }
 
@@ -64,7 +66,8 @@ export const crmService = {
   createLead: (data: Partial<Lead>) => api.post('/leads', data).then(res => res.data),
   updateLead: (id: string, data: Partial<Lead>) => api.put(`/leads/${id}`, data).then(res => res.data),
   deleteLead: (id: string) => api.delete(`/leads/${id}`),
-  convertLead: (id: string) => api.post(`/leads/${id}/convert`).then(res => res.data),
+  convertLead: (id: string, data?: { vcardId?: string }) =>
+    api.post(`/leads/${id}/convert`, data).then(res => res.data),
 
   getCustomers: (params?: {
     search?: string;
@@ -81,6 +84,8 @@ export const crmService = {
   updateCustomer: (id: string, data: Partial<Customer>) =>
     api.put(`/customers/${id}`, data).then(res => res.data),
   deleteCustomer: (id: string) => api.delete(`/customers/${id}`),
+  linkVcardToCustomer: (customerId: string, vcardId: string) =>
+    api.put(`/customers/${customerId}/vcard`, { vcardId }).then(res => res.data),
 
   createTag: (data: { name: string }) => api.post<Tag>('/tags', data).then(res => res.data),
   getTags: () => api.get<Tag[]>('/tags').then(res => res.data),
