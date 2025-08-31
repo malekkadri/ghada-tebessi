@@ -39,3 +39,18 @@ CREATE TABLE IF NOT EXISTS `interactions` (
   CONSTRAINT `fk_interactions_customer` FOREIGN KEY (`customerId`) REFERENCES `customers`(`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_interactions_lead` FOREIGN KEY (`leadId`) REFERENCES `leads`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `tasks` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `title` VARCHAR(255) NOT NULL,
+  `due_date` DATETIME NOT NULL,
+  `status` VARCHAR(50) NOT NULL DEFAULT 'pending',
+  `user_id` INT NOT NULL,
+  `customer_id` INT DEFAULT NULL,
+  `lead_id` INT DEFAULT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT `fk_tasks_user` FOREIGN KEY (`user_id`) REFERENCES `users`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_tasks_customer` FOREIGN KEY (`customer_id`) REFERENCES `customers`(`id`) ON DELETE SET NULL,
+  CONSTRAINT `fk_tasks_lead` FOREIGN KEY (`lead_id`) REFERENCES `leads`(`id`) ON DELETE SET NULL
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

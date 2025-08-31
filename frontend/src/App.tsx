@@ -48,6 +48,7 @@ import AuthHandler from './authentification/AuthHandler';
 import LeadsPage from './pages/LeadsPage';
 import CustomersPage from './pages/CustomersPage';
 import InteractionFormPage from './pages/InteractionForm';
+import TasksPage from './pages/TasksPage';
 
 function App() {
   const { isLoading, user } = useAuth(); 
@@ -116,6 +117,7 @@ function App() {
               <Route path="leads" element={<LeadsPage />} />
               <Route path="customers" element={<CustomersPage />} />
               <Route path="interactions/:id" element={<InteractionFormPage />} />
+              <Route path="tasks/:id" element={<TasksPage />} />
             </Route>
           </Route>
 
@@ -155,6 +157,7 @@ function App() {
               <Route path="leads" element={<LeadsPage />} />
               <Route path="customers" element={<CustomersPage />} />
               <Route path="interactions/:id" element={<InteractionFormPage />} />
+              <Route path="tasks/:id" element={<TasksPage />} />
             </Route>
             <Route path="subscriptions">
               <Route index element={<ListSubscriptions />} />
