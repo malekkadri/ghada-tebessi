@@ -7,15 +7,21 @@ interface InteractionFormProps {
 }
 
 const InteractionForm: React.FC<InteractionFormProps> = ({ customerId, onSaved }) => {
-  const [note, setNote] = useState('');
+  const [form, setForm] = useState({ type: '', date: '', notes: '' });
   const [loading, setLoading] = useState(false);
+
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>
+  ) => {
+    setForm({ ...form, [e.target.name]: e.target.value });
+  };
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await crmService.createInteraction(customerId, { note });
-      setNote('');
+      await crmService.createInteraction(customerId, form);
+      setForm({ type: '', date: '', notes: '' });
       onSaved?.();
     } catch (error) {
       console.error('Failed to save interaction:', error);
@@ -26,12 +32,27 @@ const InteractionForm: React.FC<InteractionFormProps> = ({ customerId, onSaved }
 
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
+      <input
+        name="type"
+        value={form.type}
+        onChange={handleChange}
+        className="w-full p-2 border rounded"
+        placeholder="Type"
+      />
+      <input
+        type="datetime-local"
+        name="date"
+        value={form.date}
+        onChange={handleChange}
+        className="w-full p-2 border rounded"
+      />
       <textarea
-        value={note}
-        onChange={e => setNote(e.target.value)}
+        name="notes"
+        value={form.notes}
+        onChange={handleChange}
         className="w-full p-2 border rounded"
         rows={4}
-        placeholder="Add notes about the interaction..."
+        placeholder="Notes"
       />
       <button
         type="submit"

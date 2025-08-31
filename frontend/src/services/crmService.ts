@@ -20,6 +20,7 @@ export interface Lead {
   email?: string;
   phone?: string;
   status?: string;
+  notes?: string;
 }
 
 export interface Customer {
@@ -33,8 +34,11 @@ export interface Customer {
 
 export interface Interaction {
   id: string;
-  customerId: string;
-  notes: string;
+  type: string;
+  date?: string;
+  notes?: string;
+  customerId?: string;
+  leadId?: string;
   createdAt?: string;
 }
 
@@ -56,10 +60,14 @@ export const crmService = {
 
   getInteractions: (customerId: string) =>
     api.get<Interaction[]>(`/customers/${customerId}/interactions`).then(res => res.data),
-  createInteraction: (customerId: string, data: { note: string }) =>
-    api.post(`/customers/${customerId}/interactions`, { notes: data.note }).then(res => res.data),
-  updateInteraction: (id: string, data: { note: string }) =>
-    api.put(`/interactions/${id}`, { notes: data.note }).then(res => res.data),
+  createInteraction: (
+    customerId: string,
+    data: { type: string; date?: string; notes?: string }
+  ) => api.post(`/customers/${customerId}/interactions`, data).then(res => res.data),
+  updateInteraction: (
+    id: string,
+    data: { type?: string; date?: string; notes?: string }
+  ) => api.put(`/interactions/${id}`, data).then(res => res.data),
   deleteInteraction: (id: string) => api.delete(`/interactions/${id}`),
 };
 
