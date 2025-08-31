@@ -31,9 +31,10 @@ const getCustomers = async (req, res) => {
     }
 
     const tagIds = tags ? tags.split(',') : null;
-    const include = [{ model: Tag, as: 'Tags' }];
+    const include = [{ model: Tag, as: 'Tags', through: { attributes: [] } }];
     if (tagIds) {
       include[0].where = { id: tagIds };
+      include[0].required = true;
     }
 
     const allowedSortFields = ['name', 'email', 'created_at'];
@@ -56,7 +57,7 @@ const getCustomerById = async (req, res) => {
   try {
     const customer = await Customer.findOne({
       where: { id: req.params.id, userId: req.user.id },
-      include: [{ model: Tag, as: 'Tags' }],
+      include: [{ model: Tag, as: 'Tags', through: { attributes: [] } }],
     });
     if (!customer) {
       return res.status(404).json({ error: 'Customer not found' });
@@ -76,7 +77,7 @@ const updateCustomer = async (req, res) => {
       return res.status(404).json({ error: 'Customer not found' });
     }
     const updatedCustomer = await Customer.findByPk(req.params.id, {
-      include: [{ model: Tag, as: 'Tags' }],
+      include: [{ model: Tag, as: 'Tags', through: { attributes: [] } }],
     });
     res.json(updatedCustomer);
   } catch (error) {
@@ -126,9 +127,10 @@ const getLeads = async (req, res) => {
     }
 
     const tagIds = tags ? tags.split(',') : null;
-    const include = [{ model: Tag, as: 'Tags' }];
+    const include = [{ model: Tag, as: 'Tags', through: { attributes: [] } }];
     if (tagIds) {
       include[0].where = { id: tagIds };
+      include[0].required = true;
     }
 
     const allowedSortFields = ['name', 'email', 'created_at'];
@@ -151,7 +153,7 @@ const getLeadById = async (req, res) => {
   try {
     const lead = await Lead.findOne({
       where: { id: req.params.id, userId: req.user.id },
-      include: [{ model: Tag, as: 'Tags' }],
+      include: [{ model: Tag, as: 'Tags', through: { attributes: [] } }],
     });
     if (!lead) {
       return res.status(404).json({ error: 'Lead not found' });
@@ -171,7 +173,7 @@ const updateLead = async (req, res) => {
       return res.status(404).json({ error: 'Lead not found' });
     }
     const updatedLead = await Lead.findByPk(req.params.id, {
-      include: [{ model: Tag, as: 'Tags' }],
+      include: [{ model: Tag, as: 'Tags', through: { attributes: [] } }],
     });
     res.json(updatedLead);
   } catch (error) {

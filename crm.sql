@@ -39,3 +39,28 @@ CREATE TABLE IF NOT EXISTS `interactions` (
   CONSTRAINT `fk_interactions_customer` FOREIGN KEY (`customerId`) REFERENCES `customers`(`id`) ON DELETE CASCADE,
   CONSTRAINT `fk_interactions_lead` FOREIGN KEY (`leadId`) REFERENCES `leads`(`id`) ON DELETE CASCADE
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `tags` (
+  `id` INT AUTO_INCREMENT PRIMARY KEY,
+  `name` VARCHAR(255) NOT NULL,
+  `userId` INT NOT NULL,
+  `created_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  `updated_at` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  CONSTRAINT `fk_tags_user` FOREIGN KEY (`userId`) REFERENCES `users`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `customer_tags` (
+  `customerId` INT NOT NULL,
+  `tagId` INT NOT NULL,
+  PRIMARY KEY (`customerId`, `tagId`),
+  CONSTRAINT `fk_customer_tags_customer` FOREIGN KEY (`customerId`) REFERENCES `customers`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_customer_tags_tag` FOREIGN KEY (`tagId`) REFERENCES `tags`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;
+
+CREATE TABLE IF NOT EXISTS `lead_tags` (
+  `leadId` INT NOT NULL,
+  `tagId` INT NOT NULL,
+  PRIMARY KEY (`leadId`, `tagId`),
+  CONSTRAINT `fk_lead_tags_lead` FOREIGN KEY (`leadId`) REFERENCES `leads`(`id`) ON DELETE CASCADE,
+  CONSTRAINT `fk_lead_tags_tag` FOREIGN KEY (`tagId`) REFERENCES `tags`(`id`) ON DELETE CASCADE
+) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4;

@@ -175,6 +175,12 @@ User.associate = function(models) {
     as: 'CustomDomain',
     onDelete: 'CASCADE'
   });
+
+  User.hasMany(models.Tag, {
+    foreignKey: 'userId',
+    as: 'Tags',
+    onDelete: 'CASCADE'
+  });
 };
 
 
