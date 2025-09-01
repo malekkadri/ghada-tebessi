@@ -3,6 +3,14 @@ const { Customer, Lead, Interaction, Tag, VCard } = require('../models');
 const { Op } = require('sequelize');
 const sequelize = require('../database/sequelize');
 
+const getWeekKey = (date) => {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  const weekNo = Math.ceil((((d - yearStart) / 86400000) + 1) / 7);
+  return `${d.getUTCFullYear()}-${weekNo.toString().padStart(2, '0')}`;
+};
+
 const allowedStatuses = ['active', 'inactive', 'prospect', 'lost'];
 
 // Customer CRUD
@@ -148,25 +156,12 @@ const getStats = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const [leadCount, customerCount, weeklyLeads, interactionsByCustomer] = await Promise.all([
+    const [leadCount, customerCount, leads, interactions] = await Promise.all([
       Lead.count({ where: { userId } }),
       Customer.count({ where: { userId } }),
-      Lead.findAll({
-        attributes: [
-          [sequelize.fn('DATE_FORMAT', sequelize.col('created_at'), '%Y-%u'), 'week'],
-          [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
-        ],
-        where: { userId },
-        group: [sequelize.literal("DATE_FORMAT(`created_at`, '%Y-%u')")],
-        order: [[sequelize.literal('week'), 'ASC']],
-      }),
+      Lead.findAll({ where: { userId }, attributes: ['created_at'], order: [['created_at', 'ASC']] }),
       Interaction.findAll({
-        attributes: [
-          'customerId',
-          [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
-        ],
         where: { userId, customerId: { [Op.ne]: null } },
-        group: ['customerId', 'Customer.id', 'Customer.name'],
         include: [{ model: Customer, as: 'Customer', attributes: ['id', 'name'] }],
       }),
     ]);
@@ -174,16 +169,31 @@ const getStats = async (req, res) => {
     const totalLeads = leadCount + customerCount;
     const conversionRate = totalLeads ? customerCount / totalLeads : 0;
 
-    const weeklyLeadCreation = weeklyLeads.map((l) => ({
-      week: l.get('week'),
-      count: Number(l.get('count')),
-    }));
+    const weeklyMap = leads.reduce((acc, lead) => {
+      const created = lead.get('created_at') || lead.created_at || lead.createdAt;
+      if (!created) return acc;
+      const week = getWeekKey(new Date(created));
+      acc[week] = (acc[week] || 0) + 1;
+      return acc;
+    }, {});
+    const weeklyLeadCreation = Object.entries(weeklyMap)
+      .map(([week, count]) => ({ week, count }))
+      .sort((a, b) => (a.week > b.week ? 1 : -1));
 
-    const interactionsPerCustomer = interactionsByCustomer.map((i) => ({
-      customerId: i.customerId,
-      name: i.Customer ? i.Customer.name : null,
-      count: Number(i.get('count')),
-    }));
+    const interactionMap = interactions.reduce((acc, interaction) => {
+      const id = interaction.customerId;
+      if (!id) return acc;
+      if (!acc[id]) {
+        acc[id] = {
+          customerId: id,
+          name: interaction.Customer ? interaction.Customer.name : null,
+          count: 0,
+        };
+      }
+      acc[id].count += 1;
+      return acc;
+    }, {});
+    const interactionsPerCustomer = Object.values(interactionMap);
 
     res.json({
       leadCount,
