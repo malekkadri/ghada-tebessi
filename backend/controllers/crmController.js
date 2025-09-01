@@ -96,7 +96,7 @@ const getCustomerById = async (req, res) => {
 
 const updateCustomer = async (req, res) => {
   try {
-    const { status, ...updateData } = req.body;
+    const { status, vcardId, ...updateData } = req.body;
 
     if (status && !allowedStatuses.includes(status)) {
       return res.status(400).json({
@@ -106,6 +106,11 @@ const updateCustomer = async (req, res) => {
 
     const data = { ...updateData };
     if (status !== undefined) data.status = status;
+
+    // Sanitize vcardId to avoid sending empty strings that cause database errors
+    if (vcardId !== undefined) {
+      data.vcardId = vcardId === null || vcardId === '' ? null : parseInt(vcardId, 10);
+    }
 
     const [updated] = await Customer.update(data, {
       where: { id: req.params.id, userId: req.user.id },
