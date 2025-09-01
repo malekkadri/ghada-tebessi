@@ -347,25 +347,6 @@ const unassignTagFromCustomer = async (req, res) => {
   }
 };
 
-const linkVcardToCustomer = async (req, res) => {
-  try {
-    const customer = await Customer.findOne({
-      where: { id: req.params.id, userId: req.user.id },
-    });
-    if (!customer) {
-      return res.status(404).json({ error: 'Customer not found' });
-    }
-    customer.vcardId = req.body.vcardId;
-    await customer.save();
-    await customer.reload({
-      include: [{ model: VCard, as: 'Vcard', attributes: ['id', 'name'] }],
-    });
-    res.json(customer);
-  } catch (error) {
-    res.status(500).json({ error: 'Server error', details: error.message });
-  }
-};
-
 const assignTagToLead = async (req, res) => {
   try {
     const lead = await Lead.findOne({
@@ -542,7 +523,6 @@ module.exports = {
   deleteTag,
   assignTagToCustomer,
   unassignTagFromCustomer,
-  linkVcardToCustomer,
   assignTagToLead,
   unassignTagFromLead,
   getInteractionsByCustomer,

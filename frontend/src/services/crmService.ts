@@ -85,8 +85,6 @@ export const crmService = {
   updateCustomer: (id: string, data: Partial<Customer>) =>
     api.put(`/customers/${id}`, data).then(res => res.data),
   deleteCustomer: (id: string) => api.delete(`/customers/${id}`),
-  linkVcardToCustomer: (customerId: string, vcardId: string) =>
-    api.put(`/customers/${customerId}/vcard`, { vcardId }).then(res => res.data),
 
   createTag: (data: { name: string }) => api.post<Tag>('/tags', data).then(res => res.data),
   getTags: () => api.get<Tag[]>('/tags').then(res => res.data),

@@ -85,9 +85,6 @@ const CustomersPage: React.FC = () => {
     e.preventDefault();
     try {
       const newCustomer = await crmService.createCustomer(form);
-      if (form.vcardId) {
-        await crmService.linkVcardToCustomer(newCustomer.id, form.vcardId);
-      }
       for (const tagId of formTags) {
         await crmService.assignTagToCustomer(newCustomer.id, tagId);
       }
@@ -127,9 +124,6 @@ const CustomersPage: React.FC = () => {
     if (!editingCustomer) return;
     try {
       await crmService.updateCustomer(editingCustomer.id, editForm);
-      if (editForm.vcardId) {
-        await crmService.linkVcardToCustomer(editingCustomer.id, editForm.vcardId);
-      }
       const prev = editingCustomer.Tags?.map(t => t.id.toString()) || [];
       const toAdd = editFormTags.filter(id => !prev.includes(id));
       const toRemove = prev.filter(id => !editFormTags.includes(id));
