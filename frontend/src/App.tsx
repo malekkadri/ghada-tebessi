@@ -49,6 +49,7 @@ import LeadsPage from './pages/LeadsPage';
 import CustomersPage from './pages/CustomersPage';
 import InteractionFormPage from './pages/InteractionForm';
 import TasksPage from './pages/TasksPage';
+import CRMStatsPage from './pages/CRMStatsPage';
 
 function App() {
   const { isLoading, user } = useAuth(); 
@@ -114,6 +115,7 @@ function App() {
               <Route path="edit/:id" element={<CustomDomainForm />} />
             </Route>
             <Route path="crm">
+              <Route path="stats" element={<CRMStatsPage />} />
               <Route path="leads" element={<LeadsPage />} />
               <Route path="customers" element={<CustomersPage />} />
               <Route path="interactions/:id" element={<InteractionFormPage />} />
@@ -154,6 +156,7 @@ function App() {
               <Route index element={<ListCustomDomains />} />
             </Route>
             <Route path="crm">
+              <Route path="stats" element={<CRMStatsPage />} />
               <Route path="leads" element={<LeadsPage />} />
               <Route path="customers" element={<CustomersPage />} />
               <Route path="interactions/:id" element={<InteractionFormPage />} />
