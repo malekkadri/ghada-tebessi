@@ -170,7 +170,7 @@ app.use('/project', projectRoutes);
 app.use('/pixel', pixelRoutes);
 app.use('/crm', requireAuth, crmRoutes);
 app.use('/tasks', requireAuth, taskRoutes);
-app.use('/assistant', requireAuth, assistantRoutes);
+app.use('/assistant', assistantRoutes);
 app.use('/custom-domain', customDomainRoutes);
 app.use('/', statsRoutes);
 
