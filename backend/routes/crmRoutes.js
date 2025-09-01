@@ -3,6 +3,8 @@ const router = express.Router();
 const crmController = require('../controllers/crmController');
 const { requireAuth } = require('../middleware/authMiddleware');
 
+router.get('/stats', requireAuth, crmController.getStats);
+
 // Customer routes
 router.post('/customers', requireAuth, crmController.createCustomer);
 router.get('/customers', requireAuth, crmController.getCustomers);

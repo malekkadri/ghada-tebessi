@@ -52,7 +52,13 @@ export interface Interaction {
   createdAt?: string;
 }
 
+export interface CRMStats {
+  leadCount: number;
+  customerCount: number;
+}
+
 export const crmService = {
+  getStats: () => api.get<CRMStats>('/stats').then(res => res.data),
   getLeads: (params?: {
     search?: string;
     sortBy?: string;

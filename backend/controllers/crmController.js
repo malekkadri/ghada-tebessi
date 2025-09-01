@@ -145,6 +145,19 @@ const deleteCustomer = async (req, res) => {
   }
 };
 
+// Stats
+const getStats = async (req, res) => {
+  try {
+    const [leadCount, customerCount] = await Promise.all([
+      Lead.count({ where: { userId: req.user.id } }),
+      Customer.count({ where: { userId: req.user.id } }),
+    ]);
+    res.json({ leadCount, customerCount });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
 // Lead CRUD
 const createLead = async (req, res) => {
   try {
@@ -541,6 +554,7 @@ module.exports = {
   getCustomerById,
   updateCustomer,
   deleteCustomer,
+  getStats,
   createLead,
   getLeads,
   getLeadById,
