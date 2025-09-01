@@ -157,7 +157,7 @@ const getStats = async (req, res) => {
           [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
         ],
         where: { userId },
-        group: ['week'],
+        group: [sequelize.literal("DATE_FORMAT(`created_at`, '%Y-%u')")],
         order: [[sequelize.literal('week'), 'ASC']],
       }),
       Interaction.findAll({
@@ -166,8 +166,8 @@ const getStats = async (req, res) => {
           [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
         ],
         where: { userId, customerId: { [Op.ne]: null } },
-        group: ['customerId', 'Customer.id'],
-        include: [{ model: Customer, as: 'Customer', attributes: ['name'] }],
+        group: ['customerId', 'Customer.id', 'Customer.name'],
+        include: [{ model: Customer, as: 'Customer', attributes: ['id', 'name'] }],
       }),
     ]);
 
