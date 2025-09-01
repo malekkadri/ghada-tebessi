@@ -21,14 +21,13 @@ const CRMStatsPage: React.FC = () => {
     let ignore = false;
     async function fetchData() {
       try {
-        const [leads, customers, tasks] = await Promise.all([
-          crmService.getLeads(),
-          crmService.getCustomers(),
+        const [stats, tasks] = await Promise.all([
+          crmService.getStats(),
           taskService.getTasks({ status: 'pending' })
         ]);
         if (!ignore) {
-          setLeadCount(leads.length);
-          setCustomerCount(customers.length);
+          setLeadCount(stats.leadCount);
+          setCustomerCount(stats.customerCount);
           setReminders(tasks);
         }
       } catch (err) {
