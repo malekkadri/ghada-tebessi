@@ -9,6 +9,12 @@ router.post('/chat', async (req, res) => {
   if (!message) {
     return res.status(400).json({ error: 'Message is required' });
   }
+  // Provide a graceful fallback when the API key is missing. This avoids
+  // returning an internal server error during development or testing
+  // environments where the external API cannot be reached.
+  if (!process.env.GROQ_API_KEY) {
+    return res.json({ reply: `You said: ${message}` });
+  }
 
   try {
     const response = await axios.post(
@@ -32,7 +38,9 @@ router.post('/chat', async (req, res) => {
     res.json({ reply });
   } catch (error) {
     console.error('Groq API error:', error.response?.data || error.message);
-    res.status(500).json({ error: 'Failed to get response from assistant' });
+    res
+      .status(error.response?.status || 500)
+      .json({ error: 'Failed to get response from assistant' });
   }
 });
 
