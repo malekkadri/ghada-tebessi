@@ -7,10 +7,10 @@ import { useAuth } from '../context/AuthContext';
 
 const CustomersPage: React.FC = () => {
   const [customers, setCustomers] = useState<Customer[]>([]);
-  const [form, setForm] = useState({ name: '', email: '', phone: '', status: '', notes: '', vcardId: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', status: 'active', notes: '', vcardId: '' });
   const [formTags, setFormTags] = useState<string[]>([]);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', email: '', phone: '', status: '', notes: '', vcardId: '' });
+  const [editForm, setEditForm] = useState({ name: '', email: '', phone: '', status: 'active', notes: '', vcardId: '' });
   const [editFormTags, setEditFormTags] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState('name');
@@ -19,6 +19,7 @@ const CustomersPage: React.FC = () => {
   const [newTag, setNewTag] = useState('');
   const [filterTags, setFilterTags] = useState<string[]>([]);
   const [vcards, setVcards] = useState<VCard[]>([]);
+  const statuses = ['active', 'inactive', 'prospect', 'lost'];
   const navigate = useNavigate();
   const location = useLocation();
   const basePath = location.pathname.startsWith('/super-admin') ? '/super-admin' : '/admin';
@@ -90,7 +91,7 @@ const CustomersPage: React.FC = () => {
       }
       const refreshed = await crmService.getCustomers({ search, sortBy, order, tags: filterTags });
       setCustomers(refreshed);
-      setForm({ name: '', email: '', phone: '', status: '', notes: '', vcardId: '' });
+      setForm({ name: '', email: '', phone: '', status: 'active', notes: '', vcardId: '' });
       setFormTags([]);
     } catch (error) {
       console.error('Failed to create customer', error);
@@ -112,7 +113,7 @@ const CustomersPage: React.FC = () => {
       name: customer.name,
       email: customer.email || '',
       phone: customer.phone || '',
-      status: customer.status || '',
+      status: customer.status || 'active',
       notes: customer.notes || '',
       vcardId: customer.vcardId ? String(customer.vcardId) : '',
     });
@@ -218,13 +219,18 @@ const CustomersPage: React.FC = () => {
           placeholder="Phone"
           className="w-full p-2 border rounded"
         />
-        <input
+        <select
           name="status"
           value={form.status}
           onChange={handleChange}
-          placeholder="Status"
           className="w-full p-2 border rounded"
-        />
+        >
+          {statuses.map(status => (
+            <option key={status} value={status}>
+              {status.charAt(0).toUpperCase() + status.slice(1)}
+            </option>
+          ))}
+        </select>
         <select
           multiple
           value={formTags}
@@ -286,13 +292,18 @@ const CustomersPage: React.FC = () => {
             placeholder="Phone"
             className="w-full p-2 border rounded"
           />
-          <input
+          <select
             name="status"
             value={editForm.status}
             onChange={handleEditChange}
-            placeholder="Status"
             className="w-full p-2 border rounded"
-          />
+          >
+            {statuses.map(status => (
+              <option key={status} value={status}>
+                {status.charAt(0).toUpperCase() + status.slice(1)}
+              </option>
+            ))}
+          </select>
           <select
             multiple
             value={editFormTags}
@@ -352,7 +363,9 @@ const CustomersPage: React.FC = () => {
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-900 dark:text-gray-200">{customer.name}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{customer.email}</td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{customer.phone}</td>
-                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">{customer.status}</td>
+                  <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
+                    {customer.status ? customer.status.charAt(0).toUpperCase() + customer.status.slice(1) : ''}
+                  </td>
                   <td className="px-4 py-4 whitespace-nowrap text-sm text-gray-500 dark:text-gray-400">
                     {customer.Tags?.map(t => t.name).join(', ')}
                   </td>
