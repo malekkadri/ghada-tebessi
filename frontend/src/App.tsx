@@ -50,6 +50,7 @@ import CustomersPage from './pages/CustomersPage';
 import InteractionFormPage from './pages/InteractionForm';
 import TasksPage from './pages/TasksPage';
 import CRMStatsPage from './pages/CRMStatsPage';
+import AssistantPage from './pages/AssistantPage';
 
 function App() {
   const { isLoading, user } = useAuth(); 
@@ -121,9 +122,10 @@ function App() {
               <Route path="interactions/:id" element={<InteractionFormPage />} />
               <Route path="tasks/:id" element={<TasksPage />} />
             </Route>
+            <Route path="assistant" element={<AssistantPage />} />
           </Route>
 
-          <Route path="/super-admin" element={<Layout role="superAdmin" />}>
+          <Route path="/super-admin" element={<Layout role="superAdmin" />}> 
             <Route index element={<Navigate to="dashboard" replace />} />
             <Route path="dashboard">
               <Route index element={<DashboardAdmin />} />
@@ -162,6 +164,7 @@ function App() {
               <Route path="interactions/:id" element={<InteractionFormPage />} />
               <Route path="tasks/:id" element={<TasksPage />} />
             </Route>
+            <Route path="assistant" element={<AssistantPage />} />
             <Route path="subscriptions">
               <Route index element={<ListSubscriptions />} />
             </Route>

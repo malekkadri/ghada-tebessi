@@ -142,6 +142,15 @@ const Sidebar: React.FC<SidebarProps> = ({
           </svg>
         ),
         label: 'Customers'
+      },
+      {
+        path: `${basePath}/assistant`,
+        icon: (
+          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M8 10h.01M12 10h.01M16 10h.01M21 12c0 3.866-3.582 7-8 7a8.966 8.966 0 01-4-.9L3 20l1.9-5A8.966 8.966 0 013 12c0-3.866 3.582-7 8-7s8 3.134 8 7z" />
+          </svg>
+        ),
+        label: 'Assistant'
       }
     ];
 
