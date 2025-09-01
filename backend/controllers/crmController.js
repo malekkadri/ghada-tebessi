@@ -1,8 +1,5 @@
-const Customer = require('../models/Customer');
-const Lead = require('../models/Lead');
-const Interaction = require('../models/Interaction');
-const Tag = require('../models/Tag');
-const VCard = require('../models/Vcard');
+// Load all models with associations initialized
+const { Customer, Lead, Interaction, Tag, VCard } = require('../models');
 const { Op } = require('sequelize');
 const sequelize = require('../database/sequelize');
 
