@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { crmService, CRMStats } from '../services/crmService';
 import taskService, { Task } from '../services/taskService';
 import CRMCharts from '../atoms/Charts/CRMCharts';
@@ -16,33 +16,49 @@ const CRMStatsPage: React.FC = () => {
   const [stats, setStats] = useState<CRMStats | null>(null);
   const [reminders, setReminders] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    let ignore = false;
-    async function fetchData() {
-      try {
-        const [stats, tasks] = await Promise.all([
-          crmService.getStats(),
-          taskService.getTasks({ status: 'pending' })
-        ]);
-        if (!ignore) {
-          setStats(stats);
-          setReminders(tasks);
-        }
-      } catch (err) {
-        console.error('Failed to load CRM stats', err);
-      } finally {
-        if (!ignore) setLoading(false);
-      }
+  const [error, setError] = useState<string | null>(null);
+  const fetchData = useCallback(async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [stats, tasks] = await Promise.all([
+        crmService.getStats(),
+        taskService.getTasks({ status: 'pending' })
+      ]);
+      setStats(stats);
+      setReminders(tasks);
+    } catch (err) {
+      console.error('Failed to load CRM stats', err);
+      setError('Failed to load CRM stats. Please try again.');
+    } finally {
+      setLoading(false);
     }
-    fetchData();
-    return () => {
-      ignore = true;
-    };
   }, []);
 
-  if (loading || !stats) {
+  useEffect(() => {
+    fetchData();
+  }, [fetchData]);
+
+  if (loading) {
     return <div className="p-4">Loading...</div>;
+  }
+
+  if (error) {
+    return (
+      <div className="p-4 text-center">
+        <p className="mb-4 text-red-600">{error}</p>
+        <button
+          onClick={fetchData}
+          className="px-4 py-2 bg-blue-500 text-white rounded"
+        >
+          Retry
+        </button>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return null;
   }
 
   return (
