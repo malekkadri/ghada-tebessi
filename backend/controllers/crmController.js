@@ -4,6 +4,7 @@ const Interaction = require('../models/Interaction');
 const Tag = require('../models/Tag');
 const VCard = require('../models/Vcard');
 const { Op } = require('sequelize');
+const sequelize = require('../database/sequelize');
 
 const allowedStatuses = ['active', 'inactive', 'prospect', 'lost'];
 
@@ -148,11 +149,52 @@ const deleteCustomer = async (req, res) => {
 // Stats
 const getStats = async (req, res) => {
   try {
-    const [leadCount, customerCount] = await Promise.all([
-      Lead.count({ where: { userId: req.user.id } }),
-      Customer.count({ where: { userId: req.user.id } }),
+    const userId = req.user.id;
+
+    const [leadCount, customerCount, weeklyLeads, interactionsByCustomer] = await Promise.all([
+      Lead.count({ where: { userId } }),
+      Customer.count({ where: { userId } }),
+      Lead.findAll({
+        attributes: [
+          [sequelize.fn('DATE_FORMAT', sequelize.col('created_at'), '%Y-%u'), 'week'],
+          [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
+        ],
+        where: { userId },
+        group: ['week'],
+        order: [[sequelize.literal('week'), 'ASC']],
+      }),
+      Interaction.findAll({
+        attributes: [
+          'customerId',
+          [sequelize.fn('COUNT', sequelize.col('id')), 'count'],
+        ],
+        where: { userId, customerId: { [Op.ne]: null } },
+        group: ['customerId', 'Customer.id'],
+        include: [{ model: Customer, as: 'Customer', attributes: ['name'] }],
+      }),
     ]);
-    res.json({ leadCount, customerCount });
+
+    const totalLeads = leadCount + customerCount;
+    const conversionRate = totalLeads ? customerCount / totalLeads : 0;
+
+    const weeklyLeadCreation = weeklyLeads.map((l) => ({
+      week: l.get('week'),
+      count: Number(l.get('count')),
+    }));
+
+    const interactionsPerCustomer = interactionsByCustomer.map((i) => ({
+      customerId: i.customerId,
+      name: i.Customer ? i.Customer.name : null,
+      count: Number(i.get('count')),
+    }));
+
+    res.json({
+      leadCount,
+      customerCount,
+      conversionRate,
+      weeklyLeadCreation,
+      interactionsPerCustomer,
+    });
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });
   }

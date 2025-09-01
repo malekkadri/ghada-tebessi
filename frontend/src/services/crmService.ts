@@ -55,6 +55,9 @@ export interface Interaction {
 export interface CRMStats {
   leadCount: number;
   customerCount: number;
+  conversionRate: number;
+  weeklyLeadCreation: { week: string; count: number }[];
+  interactionsPerCustomer: { customerId: number; name: string | null; count: number }[];
 }
 
 export const crmService = {

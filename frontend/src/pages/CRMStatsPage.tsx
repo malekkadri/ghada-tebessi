@@ -1,6 +1,7 @@
 import React, { useEffect, useState } from 'react';
-import { crmService } from '../services/crmService';
+import { crmService, CRMStats } from '../services/crmService';
 import taskService, { Task } from '../services/taskService';
+import CRMCharts from '../atoms/Charts/CRMCharts';
 
 function formatDate(iso?: string) {
   if (!iso) return '';
@@ -12,8 +13,7 @@ function formatDate(iso?: string) {
 }
 
 const CRMStatsPage: React.FC = () => {
-  const [leadCount, setLeadCount] = useState(0);
-  const [customerCount, setCustomerCount] = useState(0);
+  const [stats, setStats] = useState<CRMStats | null>(null);
   const [reminders, setReminders] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
 
@@ -26,8 +26,7 @@ const CRMStatsPage: React.FC = () => {
           taskService.getTasks({ status: 'pending' })
         ]);
         if (!ignore) {
-          setLeadCount(stats.leadCount);
-          setCustomerCount(stats.customerCount);
+          setStats(stats);
           setReminders(tasks);
         }
       } catch (err) {
@@ -42,7 +41,7 @@ const CRMStatsPage: React.FC = () => {
     };
   }, []);
 
-  if (loading) {
+  if (loading || !stats) {
     return <div className="p-4">Loading...</div>;
   }
 
@@ -52,8 +51,8 @@ const CRMStatsPage: React.FC = () => {
       <div className="grid gap-6 mb-8 md:grid-cols-2">
         <div className="min-w-0 p-4 bg-white rounded-lg shadow-xs dark:bg-gray-800">
           <h2 className="mb-4 text-lg font-semibold text-gray-600 dark:text-gray-300">Totals</h2>
-          <p className="text-gray-700 dark:text-gray-200">Leads: {leadCount}</p>
-          <p className="text-gray-700 dark:text-gray-200">Customers: {customerCount}</p>
+          <p className="text-gray-700 dark:text-gray-200">Leads: {stats.leadCount}</p>
+          <p className="text-gray-700 dark:text-gray-200">Customers: {stats.customerCount}</p>
         </div>
         <div className="min-w-0 p-4 bg-white rounded-lg shadow-xs dark:bg-gray-800">
           <h2 className="mb-4 text-lg font-semibold text-gray-600 dark:text-gray-300">Reminders</h2>
@@ -71,6 +70,11 @@ const CRMStatsPage: React.FC = () => {
           )}
         </div>
       </div>
+      <CRMCharts
+        weeklyLeadCreation={stats.weeklyLeadCreation}
+        conversionRate={stats.conversionRate}
+        interactionsPerCustomer={stats.interactionsPerCustomer}
+      />
     </div>
   );
 };
