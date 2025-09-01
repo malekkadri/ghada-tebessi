@@ -21,6 +21,7 @@ const crmRoutes = require('./routes/crmRoutes');
 const taskRoutes = require('./routes/taskRoutes');
 const customDomainRoutes = require('./routes/customDomainRoutes');
 const statsRoutes = require('./routes/statsRoutes');
+const assistantRoutes = require('./routes/assistantRoutes');
 const sequelize = require('./database/sequelize');
 const { requireAuth } = require('./middleware/authMiddleware');
 const path = require("path");
@@ -169,6 +170,7 @@ app.use('/project', projectRoutes);
 app.use('/pixel', pixelRoutes);
 app.use('/crm', requireAuth, crmRoutes);
 app.use('/tasks', requireAuth, taskRoutes);
+app.use('/assistant', requireAuth, assistantRoutes);
 app.use('/custom-domain', customDomainRoutes);
 app.use('/', statsRoutes);
 
