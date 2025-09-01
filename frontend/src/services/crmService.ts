@@ -35,7 +35,7 @@ export interface Customer {
   name: string;
   email?: string;
   phone?: string;
-  status?: string;
+  status?: 'active' | 'inactive' | 'prospect' | 'lost';
   notes?: string;
   vcardId?: string;
   Vcard?: Pick<VCard, 'id' | 'name'>;

@@ -5,11 +5,19 @@ const Tag = require('../models/Tag');
 const VCard = require('../models/Vcard');
 const { Op } = require('sequelize');
 
+const allowedStatuses = ['active', 'inactive', 'prospect', 'lost'];
+
 // Customer CRUD
 const createCustomer = async (req, res) => {
   try {
     // Clean payload to avoid sending invalid data (e.g. empty strings for integers)
-    const { vcardId, ...payload } = req.body;
+    const { vcardId, status, ...payload } = req.body;
+
+    if (status && !allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        error: `Invalid status. Allowed values: ${allowedStatuses.join(', ')}`,
+      });
+    }
 
     // Only include vcardId if it is a valid number. An empty string or undefined
     // causes Sequelize/MySQL to throw an error which resulted in a 500 response
@@ -20,6 +28,7 @@ const createCustomer = async (req, res) => {
 
     const customer = await Customer.create({
       ...payload,
+      status: status || null,
       userId: req.user.id,
     });
     res.status(201).json(customer);
@@ -87,7 +96,18 @@ const getCustomerById = async (req, res) => {
 
 const updateCustomer = async (req, res) => {
   try {
-    const [updated] = await Customer.update(req.body, {
+    const { status, ...updateData } = req.body;
+
+    if (status && !allowedStatuses.includes(status)) {
+      return res.status(400).json({
+        error: `Invalid status. Allowed values: ${allowedStatuses.join(', ')}`,
+      });
+    }
+
+    const data = { ...updateData };
+    if (status !== undefined) data.status = status;
+
+    const [updated] = await Customer.update(data, {
       where: { id: req.params.id, userId: req.user.id },
     });
     if (!updated) {
@@ -229,11 +249,16 @@ const convertLeadToCustomer = async (req, res) => {
       return res.status(404).json({ error: 'Lead not found' });
     }
 
+    let finalStatus = req.body.status || lead.status || null;
+    if (finalStatus && !allowedStatuses.includes(finalStatus)) {
+      finalStatus = 'active';
+    }
+
     const customer = await Customer.create({
       name: lead.name,
       email: lead.email,
       phone: lead.phone,
-      status: req.body.status || lead.status,
+      status: finalStatus,
       notes: lead.notes,
       userId: lead.userId,
       vcardId: req.body.vcardId || null,
