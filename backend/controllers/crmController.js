@@ -96,7 +96,8 @@ const getCustomerById = async (req, res) => {
 
 const updateCustomer = async (req, res) => {
   try {
-    const { status, ...updateData } = req.body;
+    // Clean payload to avoid sending invalid data (e.g. empty strings for integers)
+    const { status, vcardId, ...updateData } = req.body;
 
     if (status && !allowedStatuses.includes(status)) {
       return res.status(400).json({
@@ -106,6 +107,17 @@ const updateCustomer = async (req, res) => {
 
     const data = { ...updateData };
     if (status !== undefined) data.status = status;
+
+    // Only include vcardId if it is a valid number. An empty string or undefined
+    // causes Sequelize/MySQL to throw an error when updating a customer without
+    // selecting a vCard.
+    if (vcardId !== undefined) {
+      if (vcardId === '' || vcardId === null) {
+        data.vcardId = null;
+      } else {
+        data.vcardId = parseInt(vcardId, 10);
+      }
+    }
 
     const [updated] = await Customer.update(data, {
       where: { id: req.params.id, userId: req.user.id },
