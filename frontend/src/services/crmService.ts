@@ -26,6 +26,7 @@ export interface Lead {
   email?: string;
   phone?: string;
   status?: string;
+  stage?: 'new' | 'contacted' | 'qualified' | 'proposal' | 'won' | 'lost';
   notes?: string;
   Tags?: Tag[];
 }
@@ -58,6 +59,8 @@ export interface CRMStats {
   conversionRate: number;
   weeklyLeadCreation: { week: string; count: number }[];
   interactionsPerCustomer: { customerId: number; name: string | null; count: number }[];
+  stageCounts: Record<string, number>;
+  stageConversionRates: Record<string, number>;
 }
 
 export const crmService = {
@@ -67,6 +70,7 @@ export const crmService = {
     sortBy?: string;
     order?: 'asc' | 'desc';
     tags?: string[];
+    stage?: string;
   }) =>
     api
       .get<Lead[]>('/leads', {
