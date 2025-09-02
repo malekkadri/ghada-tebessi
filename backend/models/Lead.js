@@ -28,6 +28,12 @@ const Lead = sequelize.define('Lead', {
     allowNull: false,
     defaultValue: 'new'
   },
+  stageTimestamps: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    field: 'stage_timestamps',
+    defaultValue: {},
+  },
   userId: {
     type: DataTypes.INTEGER,
     allowNull: false,

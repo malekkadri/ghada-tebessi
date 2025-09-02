@@ -244,10 +244,22 @@ const getStats = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const [leadCount, customerCount, leads, interactions, stageStats] = await Promise.all([
+    const [
+      leadCount,
+      customerCount,
+      leads,
+      interactions,
+      stageStats,
+      conversionTimes,
+      customerStages,
+    ] = await Promise.all([
       Lead.count({ where: { userId } }),
       Customer.count({ where: { userId } }),
-      Lead.findAll({ where: { userId }, attributes: ['created_at'], order: [['created_at', 'ASC']] }),
+      Lead.findAll({
+        where: { userId },
+        attributes: ['created_at', 'stageTimestamps'],
+        order: [['created_at', 'ASC']],
+      }),
       Interaction.findAll({
         where: { userId, customerId: { [Op.ne]: null } },
         include: [{ model: Customer, as: 'Customer', attributes: ['id', 'name'] }],
@@ -256,6 +268,20 @@ const getStats = async (req, res) => {
         where: { userId },
         attributes: ['stage', [sequelize.fn('COUNT', sequelize.col('stage')), 'count']],
         group: ['stage'],
+        raw: true,
+      }),
+      Customer.findAll({
+        where: {
+          userId,
+          convertedAt: { [Op.ne]: null },
+          leadCreatedAt: { [Op.ne]: null },
+        },
+        attributes: ['convertedAt', 'leadCreatedAt'],
+        raw: true,
+      }),
+      Customer.findAll({
+        where: { userId, stageTimestamps: { [Op.ne]: null } },
+        attributes: ['stageTimestamps'],
         raw: true,
       }),
     ]);
@@ -299,6 +325,43 @@ const getStats = async (req, res) => {
       return acc;
     }, {});
 
+    let avgConversionDays = 0;
+    if (conversionTimes.length) {
+      const totalMs = conversionTimes.reduce((sum, c) => {
+        const conv = new Date(c.convertedAt);
+        const created = new Date(c.leadCreatedAt);
+        return sum + (conv - created);
+      }, 0);
+      avgConversionDays = totalMs / conversionTimes.length / (1000 * 60 * 60 * 24);
+    }
+
+    const stageOrder = ['new', 'contacted', 'qualified', 'proposal', 'won', 'lost'];
+    const allStages = [
+      ...leads.map((l) => l.stageTimestamps).filter(Boolean),
+      ...customerStages.map((c) => c.stageTimestamps).filter(Boolean),
+    ];
+    const stageTotals = {};
+    const stageCountsDur = {};
+    allStages.forEach((timestamps) => {
+      for (let i = 0; i < stageOrder.length - 1; i += 1) {
+        const curr = stageOrder[i];
+        const next = stageOrder[i + 1];
+        if (timestamps[curr] && timestamps[next]) {
+          const diff = new Date(timestamps[next]) - new Date(timestamps[curr]);
+          stageTotals[curr] = (stageTotals[curr] || 0) + diff;
+          stageCountsDur[curr] = (stageCountsDur[curr] || 0) + 1;
+        }
+      }
+    });
+    const avgStageDuration = {};
+    stageOrder.slice(0, -1).forEach((stage) => {
+      if (stageCountsDur[stage]) {
+        avgStageDuration[stage] = stageTotals[stage] / stageCountsDur[stage] / (1000 * 60 * 60 * 24);
+      } else {
+        avgStageDuration[stage] = 0;
+      }
+    });
+
     res.json({
       leadCount,
       customerCount,
@@ -307,6 +370,8 @@ const getStats = async (req, res) => {
       interactionsPerCustomer,
       stageCounts,
       stageConversionRates,
+      avgConversionDays,
+      avgStageDuration,
     });
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });
@@ -322,10 +387,13 @@ const createLead = async (req, res) => {
         error: `Invalid stage. Allowed values: ${allowedStages.join(', ')}`,
       });
     }
+    const initialStage = stage || 'new';
+    const now = new Date();
     const lead = await Lead.create({
       ...leadData,
-      stage: stage || 'new',
+      stage: initialStage,
       userId: req.user.id,
+      stageTimestamps: { [initialStage]: now },
     });
     res.status(201).json(lead);
   } catch (error) {
@@ -396,18 +464,22 @@ const getLeadById = async (req, res) => {
 const updateLead = async (req, res) => {
   try {
     const { vcardId, stage, ...updateData } = req.body;
+    const lead = await Lead.findOne({ where: { id: req.params.id, userId: req.user.id } });
+    if (!lead) {
+      return res.status(404).json({ error: 'Lead not found' });
+    }
     if (stage && !allowedStages.includes(stage)) {
       return res.status(400).json({
         error: `Invalid stage. Allowed values: ${allowedStages.join(', ')}`,
       });
     }
-    if (stage !== undefined) updateData.stage = stage;
-    const [updated] = await Lead.update(updateData, {
-      where: { id: req.params.id, userId: req.user.id },
-    });
-    if (!updated) {
-      return res.status(404).json({ error: 'Lead not found' });
+    if (stage && stage !== lead.stage) {
+      const timestamps = { ...(lead.stageTimestamps || {}) };
+      timestamps[stage] = new Date();
+      updateData.stage = stage;
+      updateData.stageTimestamps = timestamps;
     }
+    await lead.update(updateData);
     const updatedLead = await Lead.findByPk(req.params.id, {
       include: [{ model: Tag, as: 'Tags', through: { attributes: [] } }],
     });
@@ -507,6 +579,7 @@ const convertLeadToCustomer = async (req, res) => {
       finalStatus = 'active';
     }
 
+    const now = new Date();
     const customer = await Customer.create({
       name: lead.name,
       email: lead.email,
@@ -515,6 +588,9 @@ const convertLeadToCustomer = async (req, res) => {
       notes: lead.notes,
       userId: lead.userId,
       vcardId: req.body.vcardId || null,
+      convertedAt: now,
+      leadCreatedAt: lead.created_at,
+      stageTimestamps: lead.stageTimestamps,
     });
 
     if (lead.Tags && lead.Tags.length) {
