@@ -2,6 +2,9 @@
 const { Customer, Lead, Interaction, Tag, VCard } = require('../models');
 const { Op } = require('sequelize');
 const sequelize = require('../database/sequelize');
+const fs = require('fs');
+const csvParser = require('csv-parser');
+const { Parser } = require('json2csv');
 
 const getWeekKey = (date) => {
   const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
@@ -12,6 +15,33 @@ const getWeekKey = (date) => {
 };
 
 const allowedStatuses = ['active', 'inactive', 'prospect', 'lost'];
+
+// Utility to parse CSV files and validate required headers
+const parseCsvFile = (filePath, requiredHeaders) =>
+  new Promise((resolve, reject) => {
+    const rows = [];
+    let aborted = false;
+    const stream = fs.createReadStream(filePath).pipe(csvParser());
+
+    stream
+      .on('headers', (headers) => {
+        const missing = requiredHeaders.filter((h) => !headers.includes(h));
+        if (missing.length) {
+          aborted = true;
+          stream.destroy();
+          reject(new Error(`Missing headers: ${missing.join(', ')}`));
+        }
+      })
+      .on('data', (data) => {
+        if (!aborted) rows.push(data);
+      })
+      .on('end', () => {
+        if (!aborted) resolve(rows);
+      })
+      .on('error', (err) => {
+        if (!aborted) reject(err);
+      });
+  });
 
 // Customer CRUD
 const createCustomer = async (req, res) => {
@@ -146,6 +176,62 @@ const deleteCustomer = async (req, res) => {
     }
     await customer.destroy();
     res.status(204).end();
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
+// Import customers from CSV
+const importCustomers = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const rows = await parseCsvFile(req.file.path, ['name']);
+    const records = [];
+    const invalidRows = [];
+
+    rows.forEach((row, idx) => {
+      if (!row.name || !row.name.trim()) {
+        invalidRows.push(idx + 1);
+        return;
+      }
+      records.push({
+        name: row.name.trim(),
+        email: row.email || null,
+        phone: row.phone || null,
+        status: row.status || null,
+        notes: row.notes || null,
+        userId: req.user.id,
+      });
+    });
+
+    if (invalidRows.length) {
+      return res.status(400).json({
+        error: `Missing required field 'name' in rows: ${invalidRows.join(', ')}`,
+      });
+    }
+
+    await Customer.bulkCreate(records);
+    res.json({ imported: records.length });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  } finally {
+    if (req.file) fs.unlink(req.file.path, () => {});
+  }
+};
+
+// Export customers to CSV
+const exportCustomers = async (req, res) => {
+  try {
+    const customers = await Customer.findAll({ where: { userId: req.user.id }, raw: true });
+    const fields = ['name', 'email', 'phone', 'status', 'notes'];
+    const parser = new Parser({ fields });
+    const csv = parser.parse(customers);
+    res.header('Content-Type', 'text/csv');
+    res.attachment('customers.csv');
+    return res.send(csv);
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });
   }
@@ -300,6 +386,62 @@ const deleteLead = async (req, res) => {
     }
     await lead.destroy();
     res.status(204).end();
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
+// Import leads from CSV
+const importLeads = async (req, res) => {
+  try {
+    if (!req.file) {
+      return res.status(400).json({ error: 'No file uploaded' });
+    }
+
+    const rows = await parseCsvFile(req.file.path, ['name']);
+    const records = [];
+    const invalidRows = [];
+
+    rows.forEach((row, idx) => {
+      if (!row.name || !row.name.trim()) {
+        invalidRows.push(idx + 1);
+        return;
+      }
+      records.push({
+        name: row.name.trim(),
+        email: row.email || null,
+        phone: row.phone || null,
+        status: row.status || null,
+        notes: row.notes || null,
+        userId: req.user.id,
+      });
+    });
+
+    if (invalidRows.length) {
+      return res.status(400).json({
+        error: `Missing required field 'name' in rows: ${invalidRows.join(', ')}`,
+      });
+    }
+
+    await Lead.bulkCreate(records);
+    res.json({ imported: records.length });
+  } catch (error) {
+    res.status(400).json({ error: error.message });
+  } finally {
+    if (req.file) fs.unlink(req.file.path, () => {});
+  }
+};
+
+// Export leads to CSV
+const exportLeads = async (req, res) => {
+  try {
+    const leads = await Lead.findAll({ where: { userId: req.user.id }, raw: true });
+    const fields = ['name', 'email', 'phone', 'status', 'notes'];
+    const parser = new Parser({ fields });
+    const csv = parser.parse(leads);
+    res.header('Content-Type', 'text/csv');
+    res.attachment('leads.csv');
+    return res.send(csv);
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });
   }
@@ -603,12 +745,16 @@ module.exports = {
   getCustomerById,
   updateCustomer,
   deleteCustomer,
+  importCustomers,
+  exportCustomers,
   getStats,
   createLead,
   getLeads,
   getLeadById,
   updateLead,
   deleteLead,
+  importLeads,
+  exportLeads,
   convertLeadToCustomer,
   createTag,
   getTags,

@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from 'react';
+import React, { useEffect, useMemo, useRef, useState } from 'react';
 import { crmService, Lead, Tag } from '../services/crmService';
 import PipelineStage from '../components/PipelineStage';
 import { useNavigate, useLocation } from 'react-router-dom';
@@ -246,6 +246,7 @@ const LeadsPage: React.FC = () => {
 
   const [view, setView] = useState<'table' | 'board'>('table');
   const [tagFilterOpen, setTagFilterOpen] = useState(false);
+  const importInputRef = useRef<HTMLInputElement | null>(null);
 
   const stages = ['New', 'Contacted', 'Qualified', 'Lost', 'Won'] as const;
 
@@ -273,6 +274,35 @@ const LeadsPage: React.FC = () => {
       setError('Failed to load leads.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    setError(null);
+    try {
+      await crmService.importLeads(file);
+      await fetchLeads();
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to import CSV');
+    } finally {
+      e.target.value = '';
+    }
+  };
+
+  const handleExport = async () => {
+    setError(null);
+    try {
+      const blob = await crmService.exportLeads();
+      const url = window.URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = 'leads.csv';
+      a.click();
+      window.URL.revokeObjectURL(url);
+    } catch (err: any) {
+      setError(err.response?.data?.error || 'Failed to export CSV');
     }
   };
 
@@ -432,6 +462,25 @@ const LeadsPage: React.FC = () => {
           <p className="text-sm text-gray-500 dark:text-gray-400">Capture, qualify, and convert.</p>
         </div>
         <div className="flex items-center gap-2">
+          <input
+            type="file"
+            accept=".csv"
+            ref={importInputRef}
+            onChange={handleImport}
+            className="hidden"
+          />
+          <button
+            onClick={() => importInputRef.current?.click()}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+          >
+            Import CSV
+          </button>
+          <button
+            onClick={handleExport}
+            className="inline-flex items-center gap-2 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2.5 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-700 transition"
+          >
+            Export CSV
+          </button>
           <button
             onClick={() => setShowCreate(true)}
             className="inline-flex items-center gap-2 rounded-lg bg-gray-900 text-white dark:bg-gray-100 dark:text-gray-900 px-4 py-2.5 text-sm font-semibold shadow-sm hover:brightness-110 active:translate-y-px transition"

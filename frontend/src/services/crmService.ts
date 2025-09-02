@@ -76,6 +76,14 @@ export const crmService = {
   createLead: (data: Partial<Lead>) => api.post('/leads', data).then(res => res.data),
   updateLead: (id: string, data: Partial<Lead>) => api.put(`/leads/${id}`, data).then(res => res.data),
   deleteLead: (id: string) => api.delete(`/leads/${id}`),
+  importLeads: (file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api.post('/leads/import', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  exportLeads: () => api.get('/leads/export', { responseType: 'blob' }).then(res => res.data),
   convertLead: (id: string, data?: { vcardId?: string }) =>
     api.post(`/leads/${id}/convert`, data).then(res => res.data),
 
@@ -94,6 +102,15 @@ export const crmService = {
   updateCustomer: (id: string, data: Partial<Customer>) =>
     api.put(`/customers/${id}`, data).then(res => res.data),
   deleteCustomer: (id: string) => api.delete(`/customers/${id}`),
+  importCustomers: (file: File) => {
+    const form = new FormData();
+    form.append('file', file);
+    return api.post('/customers/import', form, {
+      headers: { 'Content-Type': 'multipart/form-data' },
+    });
+  },
+  exportCustomers: () =>
+    api.get('/customers/export', { responseType: 'blob' }).then(res => res.data),
 
   createTag: (data: { name: string }) => api.post<Tag>('/tags', data).then(res => res.data),
   getTags: () => api.get<Tag[]>('/tags').then(res => res.data),
