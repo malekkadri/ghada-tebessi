@@ -1,5 +1,5 @@
 // Load all models with associations initialized
-const { Customer, Lead, Interaction, Tag, VCard, Users: User } = require('../models');
+const { Customer, Lead, Interaction, Tag, VCard, Users: User, CRMHistory } = require('../models');
 const { Op } = require('sequelize');
 const sequelize = require('../database/sequelize');
 const fs = require('fs');
@@ -928,6 +928,19 @@ const deleteInteraction = async (req, res) => {
   }
 };
 
+const getHistory = async (req, res) => {
+  try {
+    const history = await CRMHistory.findAll({
+      where: { userId: req.user.id },
+      order: [['created_at', 'DESC']],
+      limit: 100
+    });
+    res.json(history);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
 module.exports = {
   createCustomer,
   getCustomers,
@@ -963,4 +976,5 @@ module.exports = {
   getInteractionById,
   updateInteraction,
   deleteInteraction,
+  getHistory,
 };

@@ -27,6 +27,7 @@ const validateStageQuery = (req, res, next) => {
 };
 
 router.get('/stats', requireAuth, crmController.getStats);
+router.get('/history', requireAuth, crmController.getHistory);
 
 // Customer routes
 router.post('/customers', requireAuth, crmController.createCustomer);

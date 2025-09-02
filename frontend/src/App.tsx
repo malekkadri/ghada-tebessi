@@ -51,6 +51,7 @@ import InteractionFormPage from './pages/InteractionForm';
 import TasksPage from './pages/TasksPage';
 import CRMStatsPage from './pages/CRMStatsPage';
 import AssistantPage from './pages/AssistantPage';
+import CRMHistoryPage from './pages/CRMHistoryPage';
 
 function App() {
   const { isLoading, user } = useAuth(); 
@@ -119,6 +120,7 @@ function App() {
               <Route path="stats" element={<CRMStatsPage />} />
               <Route path="leads" element={<LeadsPage />} />
               <Route path="customers" element={<CustomersPage />} />
+              <Route path="history" element={<CRMHistoryPage />} />
               <Route path="interactions/:id" element={<InteractionFormPage />} />
               <Route path="tasks/:id" element={<TasksPage />} />
             </Route>
@@ -161,6 +163,7 @@ function App() {
               <Route path="stats" element={<CRMStatsPage />} />
               <Route path="leads" element={<LeadsPage />} />
               <Route path="customers" element={<CustomersPage />} />
+              <Route path="history" element={<CRMHistoryPage />} />
               <Route path="interactions/:id" element={<InteractionFormPage />} />
               <Route path="tasks/:id" element={<TasksPage />} />
             </Route>
