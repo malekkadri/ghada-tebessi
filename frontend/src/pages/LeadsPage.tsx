@@ -225,10 +225,10 @@ const ActionButton: React.FC<{
 const LeadsPage: React.FC = () => {
   const [leads, setLeads] = useState<Lead[]>([]);
   const [stageFilter, setStageFilter] = useState<string | undefined>();
-  const [form, setForm] = useState({ name: '', email: '', phone: '', status: 'New', notes: '' });
+  const [form, setForm] = useState({ name: '', email: '', phone: '', stage: 'new', notes: '' });
   const [formTags, setFormTags] = useState<string[]>([]);
   const [editingLead, setEditingLead] = useState<Lead | null>(null);
-  const [editForm, setEditForm] = useState({ name: '', email: '', phone: '', status: 'New', notes: '' });
+  const [editForm, setEditForm] = useState({ name: '', email: '', phone: '', stage: 'new', notes: '' });
   const [editFormTags, setEditFormTags] = useState<string[]>([]);
   const [search, setSearch] = useState('');
   const [sortBy, setSortBy] = useState<'name' | 'email' | 'created_at'>('name');
@@ -248,7 +248,7 @@ const LeadsPage: React.FC = () => {
   const [tagFilterOpen, setTagFilterOpen] = useState(false);
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
-  const stages = ['New', 'Contacted', 'Qualified', 'Lost', 'Won'] as const;
+  const stages = ['new', 'contacted', 'qualified', 'proposal', 'won', 'lost'] as const;
 
   const navigate = useNavigate();
   const location = useLocation();
@@ -267,7 +267,7 @@ const LeadsPage: React.FC = () => {
     setLoading(true);
     setError(null);
     try {
-      const data = await crmService.getLeads({ search: debouncedSearch, sortBy, order, tags: filterTags });
+      const data = await crmService.getLeads({ search: debouncedSearch, sortBy, order, tags: filterTags, stage: stageFilter });
       setLeads(data);
     } catch (err) {
       console.error('Failed to load leads', err);
@@ -309,11 +309,11 @@ const LeadsPage: React.FC = () => {
   useEffect(() => {
     fetchLeads();
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [debouncedSearch, sortBy, order, filterTags.join('|')]);
+  }, [debouncedSearch, sortBy, order, filterTags.join('|'), stageFilter]);
 
   const filteredLeads = useMemo(() => {
     let arr = leads.slice();
-    if (stageFilter) arr = arr.filter((l) => l.status === stageFilter);
+    if (stageFilter) arr = arr.filter((l) => l.stage === stageFilter);
     return arr;
   }, [leads, stageFilter]);
 
@@ -350,7 +350,7 @@ const LeadsPage: React.FC = () => {
   };
 
   const resetCreateForm = () => {
-    setForm({ name: '', email: '', phone: '', status: 'New', notes: '' });
+    setForm({ name: '', email: '', phone: '', stage: 'new', notes: '' });
     setFormTags([]);
   };
 
@@ -405,7 +405,7 @@ const LeadsPage: React.FC = () => {
       name: lead.name,
       email: lead.email || '',
       phone: lead.phone || '',
-      status: (lead.status as any) || 'New',
+      stage: (lead.stage as any) || 'new',
       notes: lead.notes || ''
     });
     setEditFormTags(lead.Tags?.map((t) => t.id.toString()) || []);
@@ -431,23 +431,24 @@ const LeadsPage: React.FC = () => {
     }
   };
 
-  const toneByStatus = (s?: string): React.ComponentProps<typeof Pill>['tone'] => {
+  const toneByStage = (s?: string): React.ComponentProps<typeof Pill>['tone'] => {
     switch (s) {
-      case 'New': return 'blue';
-      case 'Contacted': return 'purple';
-      case 'Qualified': return 'green';
-      case 'Won': return 'green';
-      case 'Lost': return 'red';
+      case 'new': return 'blue';
+      case 'contacted': return 'purple';
+      case 'qualified': return 'green';
+      case 'proposal': return 'yellow';
+      case 'won': return 'green';
+      case 'lost': return 'red';
       default: return 'gray';
     }
   };
 
-  /* Board columns (grouped by status) */
+  /* Board columns (grouped by stage) */
   const boardColumns = useMemo(() => {
     const map = new Map<string, Lead[]>();
     stages.forEach((s) => map.set(s, []));
     filteredLeads.forEach((l) => {
-      const key = stages.includes(l.status as any) ? (l.status as string) : 'New';
+      const key = stages.includes(l.stage as any) ? (l.stage as string) : 'new';
       map.get(key)!.push(l);
     });
     return stages.map((s) => ({ stage: s, items: map.get(s)! }));
@@ -612,7 +613,7 @@ const LeadsPage: React.FC = () => {
             <Select
               value={stageFilter ?? ''}
               onChange={(e) => setStageFilter(e.target.value || undefined)}
-              options={[{ label: 'All stages', value: '' }, ...stages.map((s) => ({ label: s, value: s }))]}
+              options={[{ label: 'All stages', value: '' }, ...stages.map((s) => ({ label: toTitle(s), value: s }))]}
             />
             <button
               onClick={() => { setSearch(''); setFilterTags([]); setSortBy('name'); setOrder('asc'); setStageFilter(undefined); }}
@@ -625,7 +626,11 @@ const LeadsPage: React.FC = () => {
       </div>
 
       {/* Quick pipeline viz */}
-      <PipelineStage stages={stages as unknown as string[]} current={stageFilter} onStageClick={setStageFilter} />
+      <PipelineStage
+        stages={stages.map(toTitle) as unknown as string[]}
+        current={stageFilter ? toTitle(stageFilter) : undefined}
+        onStageClick={(s) => setStageFilter(s.toLowerCase())}
+      />
 
       {/* Error */}
       {error && (
@@ -672,7 +677,7 @@ const LeadsPage: React.FC = () => {
                       </Td>
                       <Td className="text-gray-600 dark:text-gray-300">{lead.email}</Td>
                       <Td className="text-gray-600 dark:text-gray-300">{lead.phone}</Td>
-                      <Td><Pill tone={toneByStatus(lead.status)}>{lead.status || '—'}</Pill></Td>
+                      <Td><Pill tone={toneByStage(lead.stage)}>{lead.stage ? toTitle(lead.stage) : '—'}</Pill></Td>
                       <Td>
                         <div className="flex flex-wrap gap-1">
                           {lead.Tags?.length ? lead.Tags.map((t) => <Pill key={t.id}>{t.name}</Pill>) : <span className="text-sm text-gray-400">—</span>}
@@ -724,7 +729,7 @@ const LeadsPage: React.FC = () => {
             <div key={stage} className="rounded-xl border border-gray-200 dark:border-gray-800 bg-white/70 dark:bg-gray-900/60 backdrop-blur">
               <div className="flex items-center justify-between gap-2 px-3 py-2 border-b border-gray-200 dark:border-gray-800">
                 <div className="flex items-center gap-2">
-                  <Pill tone={toneByStatus(stage)}>{stage}</Pill>
+                  <Pill tone={toneByStage(stage)}>{toTitle(stage)}</Pill>
                 </div>
                 <Pill tone="gray">{items.length}</Pill>
               </div>
@@ -745,7 +750,7 @@ const LeadsPage: React.FC = () => {
                             <div className="font-medium text-gray-900 dark:text-gray-100">{lead.name}</div>
                             <div className="text-xs text-gray-500 dark:text-gray-400">{lead.email || '—'} • {lead.phone || '—'}</div>
                           </div>
-                          <div className="shrink-0"><Pill tone={toneByStatus(lead.status)}>{lead.status}</Pill></div>
+                          <div className="shrink-0"><Pill tone={toneByStage(lead.stage)}>{toTitle(lead.stage)}</Pill></div>
                         </div>
                         {lead.notes && <p className="mt-2 text-sm text-gray-700 dark:text-gray-300 line-clamp-3">{lead.notes}</p>}
                         <div className="mt-2 flex flex-wrap gap-1">
@@ -799,11 +804,11 @@ const LeadsPage: React.FC = () => {
             <Input label="Email" name="email" value={form.email} onChange={handleChange} type="email" />
             <Input label="Phone" name="phone" value={form.phone} onChange={handleChange} />
             <Select
-              label="Status"
-              name="status"
-              value={form.status}
+              label="Stage"
+              name="stage"
+              value={form.stage}
               onChange={handleChange}
-              options={Array.from(stages).map((s) => ({ label: s, value: s }))}
+              options={Array.from(stages).map((s) => ({ label: toTitle(s), value: s }))}
             />
           </div>
           <div>
@@ -876,11 +881,11 @@ const LeadsPage: React.FC = () => {
             <Input label="Email" name="email" value={editForm.email} onChange={handleEditChange} type="email" />
             <Input label="Phone" name="phone" value={editForm.phone} onChange={handleEditChange} />
             <Select
-              label="Status"
-              name="status"
-              value={editForm.status}
+              label="Stage"
+              name="stage"
+              value={editForm.stage}
               onChange={handleEditChange}
-              options={Array.from(stages).map((s) => ({ label: s, value: s }))}
+              options={Array.from(stages).map((s) => ({ label: toTitle(s), value: s }))}
             />
           </div>
           <div>

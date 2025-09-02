@@ -15,6 +15,7 @@ const getWeekKey = (date) => {
 };
 
 const allowedStatuses = ['active', 'inactive', 'prospect', 'lost'];
+const allowedStages = ['new', 'contacted', 'qualified', 'proposal', 'won', 'lost'];
 
 // Utility to parse CSV files and validate required headers
 const parseCsvFile = (filePath, requiredHeaders) =>
@@ -242,13 +243,19 @@ const getStats = async (req, res) => {
   try {
     const userId = req.user.id;
 
-    const [leadCount, customerCount, leads, interactions] = await Promise.all([
+    const [leadCount, customerCount, leads, interactions, stageStats] = await Promise.all([
       Lead.count({ where: { userId } }),
       Customer.count({ where: { userId } }),
       Lead.findAll({ where: { userId }, attributes: ['created_at'], order: [['created_at', 'ASC']] }),
       Interaction.findAll({
         where: { userId, customerId: { [Op.ne]: null } },
         include: [{ model: Customer, as: 'Customer', attributes: ['id', 'name'] }],
+      }),
+      Lead.findAll({
+        where: { userId },
+        attributes: ['stage', [sequelize.fn('COUNT', sequelize.col('stage')), 'count']],
+        group: ['stage'],
+        raw: true,
       }),
     ]);
 
@@ -281,12 +288,24 @@ const getStats = async (req, res) => {
     }, {});
     const interactionsPerCustomer = Object.values(interactionMap);
 
+    const stageCounts = stageStats.reduce((acc, row) => {
+      acc[row.stage] = Number(row.count);
+      return acc;
+    }, {});
+
+    const stageConversionRates = Object.entries(stageCounts).reduce((acc, [stage, count]) => {
+      acc[stage] = leadCount ? count / leadCount : 0;
+      return acc;
+    }, {});
+
     res.json({
       leadCount,
       customerCount,
       conversionRate,
       weeklyLeadCreation,
       interactionsPerCustomer,
+      stageCounts,
+      stageConversionRates,
     });
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });
@@ -296,9 +315,15 @@ const getStats = async (req, res) => {
 // Lead CRUD
 const createLead = async (req, res) => {
   try {
-    const { vcardId, ...leadData } = req.body;
+    const { vcardId, stage, ...leadData } = req.body;
+    if (stage && !allowedStages.includes(stage)) {
+      return res.status(400).json({
+        error: `Invalid stage. Allowed values: ${allowedStages.join(', ')}`,
+      });
+    }
     const lead = await Lead.create({
       ...leadData,
+      stage: stage || 'new',
       userId: req.user.id,
     });
     res.status(201).json(lead);
@@ -309,7 +334,7 @@ const createLead = async (req, res) => {
 
 const getLeads = async (req, res) => {
   try {
-    const { search, sortBy = 'created_at', order = 'ASC', tags } = req.query;
+    const { search, sortBy = 'created_at', order = 'ASC', tags, stage } = req.query;
 
     const where = { userId: req.user.id };
     if (search) {
@@ -318,6 +343,15 @@ const getLeads = async (req, res) => {
         { email: { [Op.like]: `%${search}%` } },
         { phone: { [Op.like]: `%${search}%` } },
       ];
+    }
+
+    if (stage) {
+      if (!allowedStages.includes(stage)) {
+        return res.status(400).json({
+          error: `Invalid stage. Allowed values: ${allowedStages.join(', ')}`,
+        });
+      }
+      where.stage = stage;
     }
 
     const tagIds = tags ? tags.split(',') : null;
@@ -360,7 +394,13 @@ const getLeadById = async (req, res) => {
 
 const updateLead = async (req, res) => {
   try {
-    const { vcardId, ...updateData } = req.body;
+    const { vcardId, stage, ...updateData } = req.body;
+    if (stage && !allowedStages.includes(stage)) {
+      return res.status(400).json({
+        error: `Invalid stage. Allowed values: ${allowedStages.join(', ')}`,
+      });
+    }
+    if (stage !== undefined) updateData.stage = stage;
     const [updated] = await Lead.update(updateData, {
       where: { id: req.params.id, userId: req.user.id },
     });
@@ -407,11 +447,14 @@ const importLeads = async (req, res) => {
         invalidRows.push(idx + 1);
         return;
       }
+      let stage = row.stage ? row.stage.toLowerCase() : 'new';
+      if (!allowedStages.includes(stage)) stage = 'new';
       records.push({
         name: row.name.trim(),
         email: row.email || null,
         phone: row.phone || null,
         status: row.status || null,
+        stage,
         notes: row.notes || null,
         userId: req.user.id,
       });
@@ -436,7 +479,7 @@ const importLeads = async (req, res) => {
 const exportLeads = async (req, res) => {
   try {
     const leads = await Lead.findAll({ where: { userId: req.user.id }, raw: true });
-    const fields = ['name', 'email', 'phone', 'status', 'notes'];
+    const fields = ['name', 'email', 'phone', 'status', 'stage', 'notes'];
     const parser = new Parser({ fields });
     const csv = parser.parse(leads);
     res.header('Content-Type', 'text/csv');

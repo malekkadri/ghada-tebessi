@@ -23,6 +23,11 @@ const Lead = sequelize.define('Lead', {
     type: DataTypes.STRING,
     allowNull: true
   },
+  stage: {
+    type: DataTypes.ENUM('new', 'contacted', 'qualified', 'proposal', 'won', 'lost'),
+    allowNull: false,
+    defaultValue: 'new'
+  },
   userId: {
     type: DataTypes.INTEGER,
     allowNull: false,

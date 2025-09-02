@@ -4,6 +4,28 @@ const crmController = require('../controllers/crmController');
 const { requireAuth } = require('../middleware/authMiddleware');
 const uploadService = require('../services/uploadService');
 
+const allowedStages = ['new', 'contacted', 'qualified', 'proposal', 'won', 'lost'];
+
+const validateStageBody = (req, res, next) => {
+  const { stage } = req.body;
+  if (stage && !allowedStages.includes(stage)) {
+    return res.status(400).json({
+      error: `Invalid stage. Allowed values: ${allowedStages.join(', ')}`,
+    });
+  }
+  next();
+};
+
+const validateStageQuery = (req, res, next) => {
+  const { stage } = req.query;
+  if (stage && !allowedStages.includes(stage)) {
+    return res.status(400).json({
+      error: `Invalid stage. Allowed values: ${allowedStages.join(', ')}`,
+    });
+  }
+  next();
+};
+
 router.get('/stats', requireAuth, crmController.getStats);
 
 // Customer routes
@@ -20,10 +42,10 @@ router.post('/customers/:id/tags/:tagId', requireAuth, crmController.assignTagTo
 router.delete('/customers/:id/tags/:tagId', requireAuth, crmController.unassignTagFromCustomer);
 
 // Lead routes
-router.post('/leads', requireAuth, crmController.createLead);
-router.get('/leads', requireAuth, crmController.getLeads);
+router.post('/leads', requireAuth, validateStageBody, crmController.createLead);
+router.get('/leads', requireAuth, validateStageQuery, crmController.getLeads);
 router.get('/leads/:id', requireAuth, crmController.getLeadById);
-router.put('/leads/:id', requireAuth, crmController.updateLead);
+router.put('/leads/:id', requireAuth, validateStageBody, crmController.updateLead);
 router.post('/leads/:id/convert', requireAuth, crmController.convertLeadToCustomer);
 router.delete('/leads/:id', requireAuth, crmController.deleteLead);
 router.post('/leads/:id/convert', requireAuth, crmController.convertLeadToCustomer);
