@@ -50,6 +50,7 @@ export interface Interaction {
   notes?: string;
   customerId?: string;
   leadId?: string;
+  attachmentPath?: string;
   createdAt?: string;
 }
 
@@ -141,12 +142,34 @@ export const crmService = {
   createInteraction: (
     entity: 'customers' | 'leads',
     id: string,
-    data: { type: string; date?: string; notes?: string }
-  ) => api.post(`/${entity}/${id}/interactions`, data).then(res => res.data),
+    data: { type: string; date?: string; notes?: string; file?: File }
+  ) => {
+    const form = new FormData();
+    form.append('type', data.type);
+    if (data.date) form.append('date', data.date);
+    if (data.notes) form.append('notes', data.notes);
+    if (data.file) form.append('file', data.file);
+    return api
+      .post(`/${entity}/${id}/interactions`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then(res => res.data);
+  },
   updateInteraction: (
     id: string,
-    data: { type?: string; date?: string; notes?: string }
-  ) => api.put(`/interactions/${id}`, data).then(res => res.data),
+    data: { type?: string; date?: string; notes?: string; file?: File }
+  ) => {
+    const form = new FormData();
+    if (data.type) form.append('type', data.type);
+    if (data.date) form.append('date', data.date);
+    if (data.notes) form.append('notes', data.notes);
+    if (data.file) form.append('file', data.file);
+    return api
+      .put(`/interactions/${id}`, form, {
+        headers: { 'Content-Type': 'multipart/form-data' },
+      })
+      .then(res => res.data);
+  },
   deleteInteraction: (id: string) => api.delete(`/interactions/${id}`),
 };
 

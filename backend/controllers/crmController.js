@@ -3,6 +3,7 @@ const { Customer, Lead, Interaction, Tag, VCard, Users: User } = require('../mod
 const { Op } = require('sequelize');
 const sequelize = require('../database/sequelize');
 const fs = require('fs');
+const { deleteFileIfExists } = require('../services/uploadService');
 const csvParser = require('csv-parser');
 const { Parser } = require('json2csv');
 
@@ -727,11 +728,15 @@ const getInteractionsByCustomer = async (req, res) => {
 
 const createInteractionForCustomer = async (req, res) => {
   try {
-    const interaction = await Interaction.create({
+    const data = {
       ...req.body,
       customerId: req.params.id,
       userId: req.user.id,
-    });
+    };
+    if (req.file) {
+      data.attachmentPath = `/uploads/${req.file.filename}`;
+    }
+    const interaction = await Interaction.create(data);
     res.status(201).json(interaction);
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });
@@ -751,11 +756,15 @@ const getInteractionsByLead = async (req, res) => {
 
 const createInteractionForLead = async (req, res) => {
   try {
-    const interaction = await Interaction.create({
+    const data = {
       ...req.body,
       leadId: req.params.id,
       userId: req.user.id,
-    });
+    };
+    if (req.file) {
+      data.attachmentPath = `/uploads/${req.file.filename}`;
+    }
+    const interaction = await Interaction.create(data);
     res.status(201).json(interaction);
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });
@@ -764,10 +773,14 @@ const createInteractionForLead = async (req, res) => {
 
 const createInteraction = async (req, res) => {
   try {
-    const interaction = await Interaction.create({
+    const data = {
       ...req.body,
       userId: req.user.id,
-    });
+    };
+    if (req.file) {
+      data.attachmentPath = `/uploads/${req.file.filename}`;
+    }
+    const interaction = await Interaction.create(data);
     res.status(201).json(interaction);
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });
@@ -801,14 +814,21 @@ const getInteractionById = async (req, res) => {
 
 const updateInteraction = async (req, res) => {
   try {
-    const [updated] = await Interaction.update(req.body, {
+    const interaction = await Interaction.findOne({
       where: { id: req.params.id, userId: req.user.id },
     });
-    if (!updated) {
+    if (!interaction) {
       return res.status(404).json({ error: 'Interaction not found' });
     }
-    const updatedInteraction = await Interaction.findByPk(req.params.id);
-    res.json(updatedInteraction);
+    const data = { ...req.body };
+    if (req.file) {
+      if (interaction.attachmentPath) {
+        deleteFileIfExists(interaction.attachmentPath);
+      }
+      data.attachmentPath = `/uploads/${req.file.filename}`;
+    }
+    await interaction.update(data);
+    res.json(interaction);
   } catch (error) {
     res.status(500).json({ error: 'Server error', details: error.message });
   }
@@ -821,6 +841,9 @@ const deleteInteraction = async (req, res) => {
     });
     if (!interaction) {
       return res.status(404).json({ error: 'Interaction not found' });
+    }
+    if (interaction.attachmentPath) {
+      deleteFileIfExists(interaction.attachmentPath);
     }
     await interaction.destroy();
     res.status(204).end();

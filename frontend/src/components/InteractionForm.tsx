@@ -9,6 +9,7 @@ interface InteractionFormProps {
 
 const InteractionForm: React.FC<InteractionFormProps> = ({ entityId, entityType, onSaved }) => {
   const [form, setForm] = useState({ type: '', date: '', notes: '' });
+  const [file, setFile] = useState<File | null>(null);
   const [loading, setLoading] = useState(false);
 
   const handleChange = (
@@ -17,12 +18,17 @@ const InteractionForm: React.FC<InteractionFormProps> = ({ entityId, entityType,
     setForm({ ...form, [e.target.name]: e.target.value });
   };
 
+  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setFile(e.target.files?.[0] || null);
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     try {
-      await crmService.createInteraction(entityType, entityId, form);
+      await crmService.createInteraction(entityType, entityId, { ...form, file: file || undefined });
       setForm({ type: '', date: '', notes: '' });
+      setFile(null);
       onSaved?.();
     } catch (error) {
       console.error('Failed to save interaction:', error);
@@ -54,6 +60,12 @@ const InteractionForm: React.FC<InteractionFormProps> = ({ entityId, entityType,
         className="w-full p-2 border rounded"
         rows={4}
         placeholder="Notes"
+      />
+      <input
+        type="file"
+        name="file"
+        onChange={handleFileChange}
+        className="w-full p-2 border rounded"
       />
       <button
         type="submit"
