@@ -106,6 +106,8 @@ export const crmService = {
   updateCustomer: (id: string, data: Partial<Customer>) =>
     api.put(`/customers/${id}`, data).then(res => res.data),
   deleteCustomer: (id: string) => api.delete(`/customers/${id}`),
+  convertCustomer: (id: string, data: { name?: string; email?: string; role?: string }) =>
+    api.post<{ password: string }>(`/customers/${id}/convert`, data).then(res => res.data),
   importCustomers: (file: File) => {
     const form = new FormData();
     form.append('file', file);
