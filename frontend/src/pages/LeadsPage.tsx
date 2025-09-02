@@ -376,7 +376,8 @@ const LeadsPage: React.FC = () => {
     setBusy(true);
     try {
       await crmService.deleteLead(id);
-      setLeads((ls) => ls.filter((l) => l.id !== id));
+      // Compare ids as strings to ensure the deleted lead is removed even if ids are numeric
+      setLeads((ls) => ls.filter((l) => String(l.id) !== String(id)));
       setShowDelete({ open: false });
     } catch (error) {
       console.error('Failed to delete lead', error);
@@ -389,7 +390,8 @@ const LeadsPage: React.FC = () => {
     setBusy(true);
     try {
       await crmService.convertLead(id);
-      setLeads((ls) => ls.filter((l) => l.id !== id));
+      // Use string comparison in case lead ids are returned as numbers from the API
+      setLeads((ls) => ls.filter((l) => String(l.id) !== String(id)));
       setShowConvert({ open: false });
       navigate(`${basePath}/crm/customers`);
     } catch (error) {
