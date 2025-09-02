@@ -9,7 +9,8 @@
     "db:clean": "node scripts/cleanDatabase.js",
     "db:check": "node scripts/checkIndexes.js",
     "test:associations": "node scripts/testAssociations.js",
-    "list:models": "node scripts/listModels.js"
+    "list:models": "node scripts/listModels.js",
+    "db:seed": "node scripts/seedData.js"
   },
   "keywords": [],
   "author": "",
