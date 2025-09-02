@@ -40,7 +40,7 @@ const AssistantPage: React.FC = () => {
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
   const [copiedId, setCopiedId] = useState<string | null>(null);
-  const [requestKey, setRequestKey] = useState<string | null>(null);
+  const requestKeyRef = useRef<string | null>(null);
   const [errorBanner, setErrorBanner] = useState<string | null>(null);
 
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -93,14 +93,15 @@ const AssistantPage: React.FC = () => {
     setInput('');
     setLoading(true);
 
-    // Track request to ignore stale replies if user sends again quickly
+    // Track request to ignore stale replies if the user sends another message before
+    // this one completes. Using a ref avoids stale values inside the async handler.
     const key = uid();
-    setRequestKey(key);
+    requestKeyRef.current = key;
 
     try {
       const replyText = await assistantService.chat(content);
       // Ignore if a newer request was started
-      if (requestKey && requestKey !== key) return;
+      if (requestKeyRef.current !== key) return;
 
       const assistantMsg: Message = {
         id: uid(),
