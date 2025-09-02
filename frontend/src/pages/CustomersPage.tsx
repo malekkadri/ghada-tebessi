@@ -148,6 +148,9 @@ const CustomersPage: React.FC = () => {
   const [error, setError] = useState<string | null>(null);
   const [showCreate, setShowCreate] = useState(false);
   const [showDelete, setShowDelete] = useState<{ open: boolean; id?: string; name?: string }>({ open: false });
+  const [showConvert, setShowConvert] = useState<{ open: boolean; id?: string; name?: string }>({ open: false });
+  const [convertForm, setConvertForm] = useState({ name: '', email: '' });
+  const [generatedPassword, setGeneratedPassword] = useState<string | null>(null);
   const [tagFilterOpen, setTagFilterOpen] = useState(false);
   const importInputRef = useRef<HTMLInputElement | null>(null);
 
@@ -302,6 +305,32 @@ const CustomersPage: React.FC = () => {
       setShowDelete({ open: false });
     } catch (error) {
       console.error('Failed to delete customer', error);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const handleConvert = (customer: Customer) => {
+    setConvertForm({ name: customer.name, email: customer.email || '' });
+    setGeneratedPassword(null);
+    setShowConvert({ open: true, id: customer.id, name: customer.name });
+  };
+
+  const handleConvertChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const { name, value } = e.target;
+    setConvertForm((f) => ({ ...f, [name]: value }));
+  };
+
+  const handleConvertSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!showConvert.id) return;
+    setBusy(true);
+    try {
+      const res = await crmService.convertCustomer(showConvert.id, convertForm);
+      setCustomers((cs) => cs.filter((c) => c.id !== showConvert.id));
+      setGeneratedPassword(res.password);
+    } catch (error) {
+      console.error('Failed to convert customer', error);
     } finally {
       setBusy(false);
     }
@@ -599,6 +628,12 @@ const CustomersPage: React.FC = () => {
                         iconPath="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75z"
                       />
                       <ActionButton
+                        tone="yellow"
+                        onClick={() => handleConvert(customer)}
+                        label="Convert"
+                        iconPath="M12 3l4 4h-3v7h-2V7H8z"
+                      />
+                      <ActionButton
                         tone="red"
                         onClick={() => setShowDelete({ open: true, id: String(customer.id), name: customer.name })}
                         label="Delete"
@@ -794,6 +829,71 @@ const CustomersPage: React.FC = () => {
           <span className="font-medium text-gray-900 dark:text-gray-100">{showDelete.name ?? 'this customer'}</span>.
         </p>
       </Modal>
+
+      {/* Convert Modal */}
+      <Modal
+        open={showConvert.open}
+        onClose={() => (busy ? null : setShowConvert({ open: false }))}
+        title="Convert customer to user"
+        footer={
+          generatedPassword ? (
+            <div className="flex items-center justify-end gap-2">
+              <button
+                onClick={() => setShowConvert({ open: false })}
+                className="rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+              >
+                Close
+              </button>
+            </div>
+          ) : (
+            <div className="flex items-center justify-end gap-2">
+              <button
+                disabled={busy}
+                onClick={() => setShowConvert({ open: false })}
+                className="rounded-lg border border-gray-300 dark:border-gray-700 px-4 py-2 text-sm text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+              >
+                Cancel
+              </button>
+              <button
+                form="convert-customer-form"
+                type="submit"
+                disabled={busy || !convertForm.email.trim()}
+                className="inline-flex items-center gap-2 rounded-lg bg-yellow-600 text-white px-4 py-2 text-sm font-semibold hover:brightness-110 disabled:opacity-60 transition"
+              >
+                {busy ? <Spinner className="h-4 w-4" /> : null}
+                Convert
+              </button>
+            </div>
+          )
+        }
+      >
+        {generatedPassword ? (
+          <div className="space-y-3">
+            <p className="text-sm text-gray-600 dark:text-gray-300">
+              User account created. Provide this password to the customer.
+            </p>
+            <div className="flex items-center gap-2">
+              <input
+                value={generatedPassword}
+                readOnly
+                className="flex-1 rounded-lg border border-gray-300 dark:border-gray-700 bg-white dark:bg-gray-800 px-3 py-2 text-sm text-gray-900 dark:text-gray-100"
+              />
+              <button
+                type="button"
+                onClick={() => navigator.clipboard.writeText(generatedPassword)}
+                className="rounded-lg border border-gray-300 dark:border-gray-700 px-3 py-2 text-sm hover:bg-gray-50 dark:hover:bg-gray-800 transition"
+              >
+                Copy
+              </button>
+            </div>
+          </div>
+        ) : (
+          <form id="convert-customer-form" onSubmit={handleConvertSubmit} className="space-y-4">
+            <Input label="Name" name="name" value={convertForm.name} onChange={handleConvertChange} />
+            <Input label="Email" name="email" type="email" value={convertForm.email} onChange={handleConvertChange} required />
+          </form>
+        )}
+      </Modal>
     </div>
   );
 };
@@ -889,7 +989,7 @@ const Select: React.FC<
 };
 
 const ActionButton: React.FC<{
-  tone: 'blue' | 'purple' | 'green' | 'red';
+  tone: 'blue' | 'purple' | 'green' | 'red' | 'yellow';
   label: string;
   iconPath: string;
   onClick: () => void;
@@ -898,7 +998,8 @@ const ActionButton: React.FC<{
     blue: 'text-blue-600 hover:bg-blue-50 dark:hover:bg-blue-900/20',
     purple: 'text-purple-600 hover:bg-purple-50 dark:hover:bg-purple-900/20',
     green: 'text-green-600 hover:bg-green-50 dark:hover:bg-green-900/20',
-    red: 'text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20'
+    red: 'text-red-600 hover:bg-red-50 dark:hover:bg-red-900/20',
+    yellow: 'text-yellow-700 hover:bg-yellow-50 dark:hover:bg-yellow-900/20'
   };
   return (
     <button

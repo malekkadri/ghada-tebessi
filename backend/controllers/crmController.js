@@ -1,5 +1,5 @@
 // Load all models with associations initialized
-const { Customer, Lead, Interaction, Tag, VCard } = require('../models');
+const { Customer, Lead, Interaction, Tag, VCard, Users: User } = require('../models');
 const { Op } = require('sequelize');
 const sequelize = require('../database/sequelize');
 const fs = require('fs');
@@ -528,6 +528,53 @@ const convertLeadToCustomer = async (req, res) => {
   }
 };
 
+// Convert a customer to a user account
+const convertCustomerToUser = async (req, res) => {
+  try {
+    const customer = await Customer.findOne({
+      where: { id: req.params.id, userId: req.user.id },
+    });
+    if (!customer) {
+      return res.status(404).json({ error: 'Customer not found' });
+    }
+
+    const name = req.body.name || customer.name;
+    const email = req.body.email || customer.email;
+    if (!email) {
+      return res.status(400).json({ error: 'Email is required' });
+    }
+
+    const existing = await User.findOne({ where: { email } });
+    if (existing) {
+      return res.status(400).json({ error: 'User with this email already exists' });
+    }
+
+    const generatePassword = (length = 12) => {
+      const chars = 'ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+      let pwd = '';
+      for (let i = 0; i < length; i += 1) {
+        pwd += chars.charAt(Math.floor(Math.random() * chars.length));
+      }
+      return pwd;
+    };
+
+    const plainPassword = generatePassword();
+
+    const user = await User.create({
+      name,
+      email,
+      password: plainPassword,
+      role: req.body.role || 'user',
+    });
+
+    await customer.destroy();
+
+    res.status(201).json({ user, password: plainPassword });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
 // Tag CRUD
 const createTag = async (req, res) => {
   try {
@@ -799,6 +846,7 @@ module.exports = {
   importLeads,
   exportLeads,
   convertLeadToCustomer,
+  convertCustomerToUser,
   createTag,
   getTags,
   updateTag,

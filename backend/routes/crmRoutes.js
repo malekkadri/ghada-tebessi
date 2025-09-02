@@ -40,6 +40,7 @@ router.get('/customers/:id/interactions', requireAuth, crmController.getInteract
 router.post('/customers/:id/interactions', requireAuth, crmController.createInteractionForCustomer);
 router.post('/customers/:id/tags/:tagId', requireAuth, crmController.assignTagToCustomer);
 router.delete('/customers/:id/tags/:tagId', requireAuth, crmController.unassignTagFromCustomer);
+router.post('/customers/:id/convert', requireAuth, crmController.convertCustomerToUser);
 
 // Lead routes
 router.post('/leads', requireAuth, validateStageBody, crmController.createLead);
