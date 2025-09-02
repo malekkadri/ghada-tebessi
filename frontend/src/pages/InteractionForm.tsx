@@ -203,6 +203,7 @@ const InteractionsPage: React.FC = () => {
   // edit modal
   const [editingInteraction, setEditingInteraction] = useState<Interaction | null>(null);
   const [editForm, setEditForm] = useState({ type: '', date: '', notes: '' });
+  const [editFile, setEditFile] = useState<File | null>(null);
 
   // filters / sort / view
   const [search, setSearch] = useState('');
@@ -244,18 +245,23 @@ const InteractionsPage: React.FC = () => {
       date: interaction.date || '',
       notes: interaction.notes || ''
     });
+    setEditFile(null);
   };
   const handleEditChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     setEditForm((p) => ({ ...p, [e.target.name]: e.target.value }));
+  };
+  const handleEditFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setEditFile(e.target.files?.[0] || null);
   };
   const handleEditSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!editingInteraction) return;
     setBusy(true);
     try {
-      const updated = await crmService.updateInteraction(editingInteraction.id, editForm);
+      const updated = await crmService.updateInteraction(editingInteraction.id, { ...editForm, file: editFile || undefined });
       setInteractions((arr) => arr.map((i) => (i.id === editingInteraction.id ? updated : i)));
       setEditingInteraction(null);
+      setEditFile(null);
     } catch (error) {
       console.error('Failed to update interaction', error);
     } finally {
@@ -492,6 +498,18 @@ const InteractionsPage: React.FC = () => {
                       </Td>
                       <Td className="text-gray-600 dark:text-gray-300">
                         <div className="max-w-[52ch] line-clamp-2">{interaction.notes || '—'}</div>
+                        {interaction.attachmentPath && (
+                          <div>
+                            <a
+                              href={interaction.attachmentPath}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="text-blue-600 hover:underline text-sm"
+                            >
+                              Attachment
+                            </a>
+                          </div>
+                        )}
                       </Td>
                       <Td className="text-right">
                         <div className="flex justify-end gap-2">
@@ -567,6 +585,16 @@ const InteractionsPage: React.FC = () => {
                         </div>
                       </div>
                       {i.notes && <p className="mt-2 text-sm text-gray-700 dark:text-gray-300 whitespace-pre-wrap">{i.notes}</p>}
+                      {i.attachmentPath && (
+                        <a
+                          href={i.attachmentPath}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="mt-1 block text-sm text-blue-600 hover:underline"
+                        >
+                          Attachment
+                        </a>
+                      )}
                     </div>
                   </li>
                 ))}
@@ -626,6 +654,20 @@ const InteractionsPage: React.FC = () => {
             onChange={handleEditChange}
             placeholder="Details…"
           />
+          {editingInteraction?.attachmentPath && (
+            <div className="text-sm">
+              Current file:{' '}
+              <a
+                href={editingInteraction.attachmentPath}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-blue-600 hover:underline"
+              >
+                Download
+              </a>
+            </div>
+          )}
+          <Input type="file" name="file" label="Attachment" onChange={handleEditFileChange} />
         </form>
       </Modal>
 

@@ -34,6 +34,7 @@ CREATE TABLE IF NOT EXISTS `interactions` (
   `type` VARCHAR(255) NOT NULL,
   `date` DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
   `notes` TEXT,
+  `attachmentPath` VARCHAR(255) DEFAULT NULL,
   `userId` INT NOT NULL,
   `customerId` INT DEFAULT NULL,
   `leadId` INT DEFAULT NULL,

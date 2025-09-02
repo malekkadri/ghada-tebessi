@@ -37,7 +37,7 @@ router.delete('/customers/:id', requireAuth, crmController.deleteCustomer);
 router.post('/customers/import', requireAuth, uploadService.upload.single('file'), crmController.importCustomers);
 router.get('/customers/export', requireAuth, crmController.exportCustomers);
 router.get('/customers/:id/interactions', requireAuth, crmController.getInteractionsByCustomer);
-router.post('/customers/:id/interactions', requireAuth, crmController.createInteractionForCustomer);
+router.post('/customers/:id/interactions', requireAuth, uploadService.upload.single('file'), crmController.createInteractionForCustomer);
 router.post('/customers/:id/tags/:tagId', requireAuth, crmController.assignTagToCustomer);
 router.delete('/customers/:id/tags/:tagId', requireAuth, crmController.unassignTagFromCustomer);
 router.post('/customers/:id/convert', requireAuth, crmController.convertCustomerToUser);
@@ -53,7 +53,7 @@ router.post('/leads/:id/convert', requireAuth, crmController.convertLeadToCustom
 router.post('/leads/import', requireAuth, uploadService.upload.single('file'), crmController.importLeads);
 router.get('/leads/export', requireAuth, crmController.exportLeads);
 router.get('/leads/:id/interactions', requireAuth, crmController.getInteractionsByLead);
-router.post('/leads/:id/interactions', requireAuth, crmController.createInteractionForLead);
+router.post('/leads/:id/interactions', requireAuth, uploadService.upload.single('file'), crmController.createInteractionForLead);
 router.post('/leads/:id/tags/:tagId', requireAuth, crmController.assignTagToLead);
 router.delete('/leads/:id/tags/:tagId', requireAuth, crmController.unassignTagFromLead);
 
@@ -64,10 +64,10 @@ router.put('/tags/:id', requireAuth, crmController.updateTag);
 router.delete('/tags/:id', requireAuth, crmController.deleteTag);
 
 // Interaction routes
-router.post('/interactions', requireAuth, crmController.createInteraction);
+router.post('/interactions', requireAuth, uploadService.upload.single('file'), crmController.createInteraction);
 router.get('/interactions', requireAuth, crmController.getInteractions);
 router.get('/interactions/:id', requireAuth, crmController.getInteractionById);
-router.put('/interactions/:id', requireAuth, crmController.updateInteraction);
+router.put('/interactions/:id', requireAuth, uploadService.upload.single('file'), crmController.updateInteraction);
 router.delete('/interactions/:id', requireAuth, crmController.deleteInteraction);
 
 module.exports = router;

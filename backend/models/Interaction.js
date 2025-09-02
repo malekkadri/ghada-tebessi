@@ -19,6 +19,10 @@ const Interaction = sequelize.define('Interaction', {
     type: DataTypes.TEXT,
     allowNull: true
   },
+  attachmentPath: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
   userId: {
     type: DataTypes.INTEGER,
     allowNull: false,
