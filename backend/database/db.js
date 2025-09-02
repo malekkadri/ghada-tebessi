@@ -1,10 +1,11 @@
 const mysql = require('mysql2');
+require('dotenv').config();
 
 const config = {
-  host: 'localhost',
-  user: 'root',
-  password: '', 
-  database: 'pfe_project',   
+  host: process.env.DB_HOST || 'localhost',
+  user: process.env.DB_USER || 'root',
+  password: process.env.DB_PASSWORD || '',
+  database: process.env.DB_NAME || 'pfe_project',
   waitForConnections: true,
   connectionLimit: 10,
   queueLimit: 0,
@@ -14,13 +15,13 @@ const connection = mysql.createConnection(config);
 
 const initializeDatabase = () => {
   return new Promise((resolve, reject) => {
-    connection.query('CREATE DATABASE IF NOT EXISTS pfe_project', (err) => {
+    connection.query(`CREATE DATABASE IF NOT EXISTS ${config.database}`, (err) => {
       if (err) {
         console.error('Error creating the database:', err);
         return reject(err);
       }
 
-      console.log('“pfe_project” database created or already existing.');
+      console.log(`“${config.database}” database created or already existing.`);
       resolve();
     });
   });

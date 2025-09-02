@@ -6,7 +6,7 @@ const router = express.Router();
 router.post('/chat', async (req, res) => {
   const { message } = req.body;
 
-  if (!message) {
+  if (!message || !message.trim()) {
     return res.status(400).json({ error: 'Message is required' });
   }
   // Provide a graceful fallback when the API key is missing. This avoids
@@ -38,9 +38,11 @@ router.post('/chat', async (req, res) => {
     res.json({ reply });
   } catch (error) {
     console.error('Groq API error:', error.response?.data || error.message);
-    res
-      .status(error.response?.status || 500)
-      .json({ error: 'Failed to get response from assistant' });
+    if (error.response && error.response.status >= 400 && error.response.status < 500) {
+      // Graceful fallback when the assistant API returns a client error.
+      return res.json({ reply: `You said: ${message}` });
+    }
+    res.status(500).json({ error: 'Failed to get response from assistant' });
   }
 });
 
