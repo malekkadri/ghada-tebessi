@@ -301,7 +301,8 @@ const CustomersPage: React.FC = () => {
     setBusy(true);
     try {
       await crmService.deleteCustomer(id);
-      setCustomers((cs) => cs.filter((c) => c.id !== id));
+      // Ensure we compare ids as strings in case the backend returns numeric ids
+      setCustomers((cs) => cs.filter((c) => String(c.id) !== String(id)));
       setShowDelete({ open: false });
     } catch (error) {
       console.error('Failed to delete customer', error);
@@ -327,7 +328,8 @@ const CustomersPage: React.FC = () => {
     setBusy(true);
     try {
       const res = await crmService.convertCustomer(showConvert.id, convertForm);
-      setCustomers((cs) => cs.filter((c) => c.id !== showConvert.id));
+      // Filter using string comparison to handle numeric ids
+      setCustomers((cs) => cs.filter((c) => String(c.id) !== String(showConvert.id)));
       setGeneratedPassword(res.password);
     } catch (error) {
       console.error('Failed to convert customer', error);
