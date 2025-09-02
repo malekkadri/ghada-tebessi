@@ -39,3 +39,13 @@ conversion rates, and timing information.
 
 All duration metrics are expressed in days.
 
+## Seeding Sample CRM Data
+
+Run the following command to reset the database and insert example users, leads, customers, tasks and interactions:
+
+```bash
+npm run db:seed
+```
+
+This script recreates the tables and populates them with a small dataset that also generates CRM history entries through model hooks.
+
