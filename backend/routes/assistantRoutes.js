@@ -20,7 +20,7 @@ router.post('/chat', async (req, res) => {
     const response = await axios.post(
       'https://api.groq.com/openai/v1/chat/completions',
       {
-        model: process.env.GROQ_MODEL || 'llama3-8b-8192',
+        model: process.env.GROQ_MODEL || 'llama-3.1-8b-instant',
         messages: [
           { role: 'system', content: 'You are a helpful CRM assistant.' },
           { role: 'user', content: message }
