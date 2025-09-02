@@ -44,6 +44,22 @@ const Customer = sequelize.define('Customer', {
       key: 'id'
     },
     onDelete: 'SET NULL'
+  },
+  stageTimestamps: {
+    type: DataTypes.JSON,
+    allowNull: true,
+    field: 'stage_timestamps',
+    defaultValue: {},
+  },
+  convertedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'converted_at',
+  },
+  leadCreatedAt: {
+    type: DataTypes.DATE,
+    allowNull: true,
+    field: 'lead_created_at',
   }
 }, {
   tableName: 'customers',
