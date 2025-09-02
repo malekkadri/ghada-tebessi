@@ -1,5 +1,7 @@
 import React from 'react';
 import { Lead, Customer } from '../services/crmService';
+import { Card, CardHeader, CardTitle, CardContent, CardFooter } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 
 interface CustomerCardProps {
   customer: Lead | Customer;
@@ -15,43 +17,49 @@ const CustomerCard: React.FC<CustomerCardProps> = ({
   onDelete,
 }) => {
   return (
-    <div
-      className="p-4 bg-white rounded shadow cursor-pointer hover:shadow-lg transition"
+    <Card
       onClick={onClick}
+      className="cursor-pointer transition hover:shadow-md"
     >
-      <h3 className="text-lg font-semibold text-gray-800">
-        {customer.name}
-      </h3>
-      {'email' in customer && customer.email && (
-        <p className="text-sm text-gray-500">{customer.email}</p>
-      )}
+      <CardHeader>
+        <CardTitle className="text-lg">{customer.name}</CardTitle>
+      </CardHeader>
+
+      <CardContent>
+        {"email" in customer && customer.email && (
+          <p className="text-sm text-muted-foreground">{customer.email}</p>
+        )}
+      </CardContent>
+
       {(onEdit || onDelete) && (
-        <div className="mt-2 flex gap-2">
+        <CardFooter className="flex gap-2">
           {onEdit && (
-            <button
-              className="text-blue-600 text-sm"
-              onClick={e => {
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={(e) => {
                 e.stopPropagation();
                 onEdit();
               }}
             >
               Edit
-            </button>
+            </Button>
           )}
           {onDelete && (
-            <button
-              className="text-red-600 text-sm"
-              onClick={e => {
+            <Button
+              variant="destructive"
+              size="sm"
+              onClick={(e) => {
                 e.stopPropagation();
                 onDelete();
               }}
             >
               Delete
-            </button>
+            </Button>
           )}
-        </div>
+        </CardFooter>
       )}
-    </div>
+    </Card>
   );
 };
 
