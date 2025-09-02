@@ -134,6 +134,7 @@ const SkeletonRow: React.FC = () => (
     <td className="px-4 py-4"><div className="h-4 w-48 rounded bg-gray-200 dark:bg-gray-700" /></td>
     <td className="px-4 py-4"><div className="h-4 w-40 rounded bg-gray-200 dark:bg-gray-700" /></td>
     <td className="px-4 py-4"><div className="h-5 w-24 rounded-full bg-gray-200 dark:bg-gray-700" /></td>
+    <td className="px-4 py-4"><div className="h-5 w-24 rounded bg-gray-200 dark:bg-gray-700" /></td>
     <td className="px-4 py-4"><div className="h-8 w-32 rounded bg-gray-200 dark:bg-gray-700" /></td>
   </tr>
 );
@@ -315,6 +316,18 @@ const TasksPage: React.FC = () => {
       setTasks((ts) => ts.map((t) => (t.id === task.id ? updated : t)));
     } catch (error) {
       console.error('Failed to toggle task', error);
+    } finally {
+      setBusy(false);
+    }
+  };
+
+  const toggleReminder = async (task: Task) => {
+    setBusy(true);
+    try {
+      const updated = await taskService.toggleReminder(task.id, !task.reminderEnabled);
+      setTasks((ts) => ts.map((t) => (t.id === task.id ? updated : t)));
+    } catch (error) {
+      console.error('Failed to toggle reminder', error);
     } finally {
       setBusy(false);
     }
@@ -509,6 +522,7 @@ const TasksPage: React.FC = () => {
                 <Th>Title</Th>
                 <Th>Due Date</Th>
                 <Th>Status</Th>
+                <Th>Reminder</Th>
                 <Th className="text-right">Actions</Th>
               </tr>
             </thead>
@@ -518,7 +532,7 @@ const TasksPage: React.FC = () => {
                 : filtered.length === 0
                 ? (
                   <tr>
-                    <td colSpan={4} className="px-6 py-14 text-center">
+                    <td colSpan={5} className="px-6 py-14 text-center">
                       <div className="flex flex-col items-center gap-2">
                         <svg width="36" height="36" viewBox="0 0 24 24" className="text-gray-400">
                           <path fill="currentColor" d="M19 3H5a2 2 0 0 0-2 2v14l4-4h12a2 2 0 0 0 2-2V5a2 2 0 0 0-2-2Z" />
@@ -553,6 +567,15 @@ const TasksPage: React.FC = () => {
                         </div>
                       </Td>
                       <Td><Pill tone={toneByStatus(task.status)}>{task.status === 'completed' ? 'Completed' : 'Pending'}</Pill></Td>
+                      <Td>
+                        <input
+                          type="checkbox"
+                          className="h-4 w-4 accent-blue-600"
+                          checked={!!task.reminderEnabled}
+                          onChange={() => toggleReminder(task)}
+                          title={task.reminderEnabled ? 'Disable reminder' : 'Enable reminder'}
+                        />
+                      </Td>
                       <Td className="text-right whitespace-nowrap">
                         <div className="flex justify-end gap-2">
                           <ActionButton
@@ -617,6 +640,7 @@ const TasksPage: React.FC = () => {
                           <Pill tone={toneByStatus(task.status)}>{task.status === 'completed' ? 'Completed' : 'Pending'}</Pill>
                         </div>
                         <div className="mt-3 flex flex-wrap gap-2">
+                          <ActionButton tone="blue" label={task.reminderEnabled ? 'Disable' : 'Enable'} iconPath="M12 22a2 2 0 0 0 2-2h-4a2 2 0 0 0 2 2zm6-6V11c0-3.07-1.63-5.64-4.5-6.32V4a1.5 1.5 0 0 0-3 0v.68C7.63 5.36 6 7.92 6 11v5l-2 2h16l-2-2z" onClick={() => toggleReminder(task)} />
                           <ActionButton tone="green" label="Edit" iconPath="M3 17.25V21h3.75L17.81 9.94l-3.75-3.75z" onClick={() => handleEdit(task)} />
                           <ActionButton tone="red" label="Delete" iconPath="M6 7h12v13H6zM9 4h6v3H9z" onClick={() => setToDelete({ open: true, id: task.id, title: task.title })} />
                         </div>

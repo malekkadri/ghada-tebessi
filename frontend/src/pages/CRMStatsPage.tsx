@@ -151,7 +151,8 @@ const CRMStatsPage: React.FC = () => {
         taskService.getTasks({ status: 'pending' }),
       ]);
       setStats(s);
-      const sorted = [...tasks].sort((a, b) => {
+      const enabled = tasks.filter(t => t.reminderEnabled);
+      const sorted = [...enabled].sort((a, b) => {
         const da = parseISO(a.dueDate)?.getTime() ?? Infinity;
         const db = parseISO(b.dueDate)?.getTime() ?? Infinity;
         return da - db;

@@ -21,6 +21,18 @@ const Task = sequelize.define('Task', {
     allowNull: false,
     defaultValue: 'pending',
   },
+  reminderEnabled: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: true,
+    field: 'reminder_enabled',
+  },
+  reminderSent: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+    field: 'reminder_sent',
+  },
   userId: {
     type: DataTypes.INTEGER,
     allowNull: false,

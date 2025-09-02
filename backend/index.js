@@ -23,6 +23,7 @@ const taskRoutes = require('./routes/taskRoutes');
 const customDomainRoutes = require('./routes/customDomainRoutes');
 const statsRoutes = require('./routes/statsRoutes');
 const assistantRoutes = require('./routes/assistantRoutes');
+require('./scripts/taskReminder');
 const sequelize = require('./database/sequelize');
 const { requireAuth } = require('./middleware/authMiddleware');
 const path = require("path");

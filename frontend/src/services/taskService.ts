@@ -21,6 +21,7 @@ export interface Task {
   status?: string;
   customerId?: string;
   leadId?: string;
+  reminderEnabled?: boolean;
 }
 
 export const taskService = {
@@ -31,6 +32,8 @@ export const taskService = {
   updateTask: (id: string, data: Partial<Task>) =>
     api.put(`/${id}`, data).then(res => res.data),
   deleteTask: (id: string) => api.delete(`/${id}`),
+  toggleReminder: (id: string, reminderEnabled: boolean) =>
+    api.patch(`/${id}/reminder`, { reminderEnabled }).then(res => res.data),
 };
 
 export default taskService;
