@@ -2,6 +2,7 @@ const express = require('express');
 const router = express.Router();
 const crmController = require('../controllers/crmController');
 const { requireAuth } = require('../middleware/authMiddleware');
+const uploadService = require('../services/uploadService');
 
 router.get('/stats', requireAuth, crmController.getStats);
 
@@ -11,6 +12,8 @@ router.get('/customers', requireAuth, crmController.getCustomers);
 router.get('/customers/:id', requireAuth, crmController.getCustomerById);
 router.put('/customers/:id', requireAuth, crmController.updateCustomer);
 router.delete('/customers/:id', requireAuth, crmController.deleteCustomer);
+router.post('/customers/import', requireAuth, uploadService.upload.single('file'), crmController.importCustomers);
+router.get('/customers/export', requireAuth, crmController.exportCustomers);
 router.get('/customers/:id/interactions', requireAuth, crmController.getInteractionsByCustomer);
 router.post('/customers/:id/interactions', requireAuth, crmController.createInteractionForCustomer);
 router.post('/customers/:id/tags/:tagId', requireAuth, crmController.assignTagToCustomer);
@@ -24,6 +27,8 @@ router.put('/leads/:id', requireAuth, crmController.updateLead);
 router.post('/leads/:id/convert', requireAuth, crmController.convertLeadToCustomer);
 router.delete('/leads/:id', requireAuth, crmController.deleteLead);
 router.post('/leads/:id/convert', requireAuth, crmController.convertLeadToCustomer);
+router.post('/leads/import', requireAuth, uploadService.upload.single('file'), crmController.importLeads);
+router.get('/leads/export', requireAuth, crmController.exportLeads);
 router.get('/leads/:id/interactions', requireAuth, crmController.getInteractionsByLead);
 router.post('/leads/:id/interactions', requireAuth, crmController.createInteractionForLead);
 router.post('/leads/:id/tags/:tagId', requireAuth, crmController.assignTagToLead);
