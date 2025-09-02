@@ -75,10 +75,27 @@ const deleteTask = async (req, res) => {
   }
 };
 
+const toggleReminder = async (req, res) => {
+  try {
+    const [updated] = await Task.update(
+      { reminderEnabled: req.body.reminderEnabled },
+      { where: { id: req.params.id, userId: req.user.id } }
+    );
+    if (!updated) {
+      return res.status(404).json({ error: 'Task not found' });
+    }
+    const updatedTask = await Task.findByPk(req.params.id);
+    res.json(updatedTask);
+  } catch (error) {
+    res.status(500).json({ error: 'Server error', details: error.message });
+  }
+};
+
 module.exports = {
   createTask,
   getTasks,
   getTaskById,
   updateTask,
   deleteTask,
+  toggleReminder,
 };
