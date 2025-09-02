@@ -1,5 +1,20 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../database/sequelize');
+const CRMHistory = require('./CRMHistory');
+
+const logHistory = async (instance, action) => {
+  try {
+    await CRMHistory.create({
+      userId: instance.userId,
+      action,
+      entityType: 'lead',
+      entityId: instance.id,
+      details: instance.toJSON()
+    });
+  } catch (err) {
+    console.error('Failed to log CRM history', err);
+  }
+};
 
 const Lead = sequelize.define('Lead', {
   id: {
@@ -50,7 +65,12 @@ const Lead = sequelize.define('Lead', {
   tableName: 'leads',
   timestamps: true,
   createdAt: 'created_at',
-  updatedAt: 'updated_at'
+  updatedAt: 'updated_at',
+  hooks: {
+    afterCreate: (lead) => logHistory(lead, 'create'),
+    afterUpdate: (lead) => logHistory(lead, 'update'),
+    afterDestroy: (lead) => logHistory(lead, 'delete')
+  }
 });
 
 Lead.associate = (models) => {

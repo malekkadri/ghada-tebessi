@@ -54,6 +54,16 @@ export interface Interaction {
   createdAt?: string;
 }
 
+export interface CrmHistory {
+  id: string;
+  userId: string;
+  action: string;
+  entityType: string;
+  entityId: string;
+  details?: any;
+  created_at: string;
+}
+
 export interface CRMStats {
   leadCount: number;
   customerCount: number;
@@ -171,6 +181,7 @@ export const crmService = {
       .then(res => res.data);
   },
   deleteInteraction: (id: string) => api.delete(`/interactions/${id}`),
+  getHistory: () => api.get<CrmHistory[]>('/history').then(res => res.data),
 };
 
 export default crmService;
